@@ -10,6 +10,18 @@ Then run
 python setup.py build develop
 ```
 
+Link datasets in the corresponding folder:
+
+```
+stoma/
+tools/
+datasets/
+--  stoma/
+    --  annotations/
+    --  train/
+    --  val/
+```
+
 ## Training
 
 ```
