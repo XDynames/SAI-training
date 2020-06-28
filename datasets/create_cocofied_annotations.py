@@ -52,7 +52,7 @@ def poly2seg(polygon):
 
 def line2seg(line):
     line = coords2array(line)
-    if line[0] < line[1]:
+    if line[0] < line[2]:
         keypoints = [line[0], line[1], 1, line[2], line[3], 1]
     else:
         keypoints = [line[2], line[3], 1, line[0], line[1], 1]
