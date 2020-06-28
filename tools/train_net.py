@@ -25,13 +25,13 @@ import torch
 import detectron2.utils.comm as comm
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
-from detectron2.data import MetadataCatalog
+from detectron2.data import MetadataCatalog, build_detection_train_loader
 from detectron2.engine import (DefaultTrainer, default_argument_parser,
                                default_setup, hooks, launch)
 from detectron2.evaluation import (COCOEvaluator, DatasetEvaluators,
                                    SemSegEvaluator, verify_results)
 from detectron2.modeling import GeneralizedRCNNWithTTA
-from stoma.data import builtin
+from stoma.data import DatasetMapper, builtin
 
 
 class Trainer(DefaultTrainer):
@@ -41,6 +41,18 @@ class Trainer(DefaultTrainer):
     are working on a new research project. In that case you can write your
     own training loop. You can use "tools/plain_train_net.py" as an example.
     """
+
+    @classmethod
+    def build_train_loader(cls, cfg):
+        """
+        Returns:
+            iterable
+
+        It calls :func:`detectron2.data.build_detection_train_loader` with a customized
+        DatasetMapper, which adds categorical labels as a semantic mask.
+        """
+        mapper = DatasetMapper(cfg, True)
+        return build_detection_train_loader(cfg, mapper)
 
     @classmethod
     def build_evaluator(cls, cfg, dataset_name, output_folder=None):
@@ -66,22 +78,6 @@ class Trainer(DefaultTrainer):
             )
         if evaluator_type in ["coco", "coco_panoptic_seg"]:
             evaluator_list.append(COCOEvaluator(dataset_name, cfg, True, output_folder))
-        if evaluator_type == "coco_panoptic_seg":
-            evaluator_list.append(COCOPanopticEvaluator(dataset_name, output_folder))
-        if evaluator_type == "cityscapes_instance":
-            assert (
-                torch.cuda.device_count() >= comm.get_rank()
-            ), "CityscapesEvaluator currently do not work with multiple machines."
-            return CityscapesInstanceEvaluator(dataset_name)
-        if evaluator_type == "cityscapes_sem_seg":
-            assert (
-                torch.cuda.device_count() >= comm.get_rank()
-            ), "CityscapesEvaluator currently do not work with multiple machines."
-            return CityscapesSemSegEvaluator(dataset_name)
-        elif evaluator_type == "pascal_voc":
-            return PascalVOCDetectionEvaluator(dataset_name)
-        elif evaluator_type == "lvis":
-            return LVISEvaluator(dataset_name, cfg, True, output_folder)
         if len(evaluator_list) == 0:
             raise NotImplementedError(
                 "no Evaluator for the dataset {} with the type {}".format(

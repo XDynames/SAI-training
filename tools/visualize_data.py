@@ -14,7 +14,7 @@ from detectron2.data import detection_utils as utils
 from detectron2.data.build import filter_images_with_few_keypoints
 from detectron2.utils.logger import setup_logger
 from detectron2.utils.visualizer import Visualizer
-from stoma.data import builtin
+from stoma.data import DatasetMapper, builtin
 
 
 def setup(args):
@@ -68,7 +68,8 @@ if __name__ == "__main__":
 
     scale = 2.0 if args.show else 1.0
     if args.source == "dataloader":
-        train_data_loader = build_detection_train_loader(cfg)
+        mapper = DatasetMapper(cfg, True)
+        train_data_loader = build_detection_train_loader(cfg, mapper)
         for batch in train_data_loader:
             for per_image in batch:
                 # Pytorch tensor is in (C, H, W) format

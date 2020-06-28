@@ -53,7 +53,7 @@ def get_extensions():
 
     ext_modules = [
         extension(
-            "adet._C",
+            "stoma._C",
             sources,
             include_dirs=include_dirs,
             define_macros=define_macros,
@@ -83,6 +83,7 @@ setup(
         "tqdm>4.29.0",
         "tensorboard",
         "shapely",
+        "xmltodict",
     ],
     extras_require={"all": ["psutil"]},
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},

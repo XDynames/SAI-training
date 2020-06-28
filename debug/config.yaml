@@ -11,9 +11,9 @@ DATASETS:
   PROPOSAL_FILES_TEST: []
   PROPOSAL_FILES_TRAIN: []
   TEST:
-  - stoma_detection_val
+  - stoma_val
   TRAIN:
-  - stoma_detection_train
+  - stoma_train
 GLOBAL:
   HACK: 1.0
 INPUT:
@@ -39,9 +39,7 @@ MODEL:
       - 0
       - 90
     ASPECT_RATIOS:
-    - - 0.5
-      - 1.0
-      - 2.0
+    - - 0.75
     NAME: DefaultAnchorGenerator
     OFFSET: 0.0
     SIZES:
@@ -63,9 +61,9 @@ MODEL:
     - res5
     NORM: ''
     OUT_CHANNELS: 256
-  KEYPOINT_ON: false
+  KEYPOINT_ON: true
   LOAD_PROPOSALS: false
-  MASK_ON: false
+  MASK_ON: true
   META_ARCHITECTURE: GeneralizedRCNN
   PANOPTIC_FPN:
     COMBINE:
@@ -186,7 +184,7 @@ MODEL:
     - 0.5
     NAME: StandardROIHeads
     NMS_THRESH_TEST: 0.5
-    NUM_CLASSES: 80
+    NUM_CLASSES: 2
     POSITIVE_FRACTION: 0.25
     PROPOSAL_APPEND_GT: true
     SCORE_THRESH_TEST: 0.05
@@ -260,7 +258,7 @@ MODEL:
 OUTPUT_DIR: debug
 SEED: -1
 SOLVER:
-  BASE_LR: 0.02
+  BASE_LR: 0.005
   BIAS_LR_FACTOR: 1.0
   CHECKPOINT_PERIOD: 5000
   CLIP_GRADIENTS:
@@ -276,8 +274,8 @@ SOLVER:
   NESTEROV: false
   REFERENCE_WORLD_SIZE: 0
   STEPS:
-  - 60000
-  - 80000
+  - 15000
+  - 25000
   WARMUP_FACTOR: 0.001
   WARMUP_ITERS: 1000
   WARMUP_METHOD: linear
@@ -300,7 +298,7 @@ TEST:
     - 1100
     - 1200
   DETECTIONS_PER_IMAGE: 100
-  EVAL_PERIOD: 0
+  EVAL_PERIOD: 5000
   EXPECTED_RESULTS: []
   KEYPOINT_OKS_SIGMAS: []
   PRECISE_BN:
