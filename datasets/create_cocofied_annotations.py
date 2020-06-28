@@ -28,7 +28,7 @@ def get_parser():
         "If not given, will show output in an OpenCV window.",
     )
     parser.add_argument(
-        "--num-train", type=int, default=100, help="Number of training images"
+        "--num-train", type=int, default=150, help="Number of training images"
     )
     return parser
 
@@ -52,7 +52,10 @@ def poly2seg(polygon):
 
 def line2seg(line):
     line = coords2array(line)
-    keypoints = [line[0], line[1], 1, line[2], line[3], 1]
+    if line[0] < line[1]:
+        keypoints = [line[0], line[1], 1, line[2], line[3], 1]
+    else:
+        keypoints = [line[2], line[3], 1, line[0], line[1], 1]
     # create a quadrilateral of width 1
     segmentation = [
         line[0],
