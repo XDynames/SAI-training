@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import shutil
 
 import xmltodict
 from PIL import Image
@@ -20,6 +21,11 @@ def get_parser():
         "--img-dir",
         default="datasets/finalized_data/Original_imgs",
         help="path to annotation xmls",
+    )
+    parser.add_argument(
+        "--val-dir",
+        default="datasets/stoma/val",
+        help="path to validation dataset",
     )
     parser.add_argument(
         "--output",
@@ -114,6 +120,7 @@ def create_annotation(stoma, pore):
 
     ann["keypoints"] = keypoints
     ann["segmentation"] = [segmentation]
+    ann["num_keypoints"] = 2
 
     return ann
 
@@ -227,6 +234,13 @@ if __name__ == "__main__":
             len(train_list), len(val_list)
         )
     )
+
+    # copy validation images for demo
+    if not os.path.exists(args.val_dir):
+        os.makedirs(args.val_dir)
+    for val_file in val_list:
+        img_file = os.path.splitext(val_file)[0] + ".png"
+        shutil.copyfile(os.path.join(args.img_dir, img_file), os.path.join(args.val_dir, img_file))
 
     annotation_id = 0
     image_id = 0

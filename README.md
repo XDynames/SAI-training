@@ -36,6 +36,8 @@ python datasets/create_cocofied_annotations.py
 
 ## Demo
 
+### Detection
+
 First download the trained model from [this link](https://cloudstor.aarnet.edu.au/plus/s/sfkLBWae8bmal6s). Then run
 
 ```
@@ -44,4 +46,16 @@ python demo/demo.py \
     --input datasets/stoma_detection/val/ \
     --confidence-threshold 0.5 \
     --opts MODEL.WEIGHTS R_50.pth
+```
+
+### End-to-End
+
+First download the trained model from [this link](https://cloudstor.aarnet.edu.au/plus/s/1AJlUYksklDsDZH). Then run
+
+```
+python demo/demo.py \
+    --config-file configs/mask_rcnn_R_50_FPN.yaml \
+    --input datasets/stoma/val/ \
+    --confidence-threshold 0.5 \
+    --opts MODEL.WEIGHTS mask_R_50.pth
 ```

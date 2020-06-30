@@ -14,4 +14,5 @@ DATASETS:
   TEST: ("stoma_val",)
 TEST:
   EVAL_PERIOD: 5000
+  KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
 OUTPUT_DIR: output/mask/R_50
