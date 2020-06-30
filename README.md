@@ -16,10 +16,19 @@ Link datasets in the corresponding folder:
 stoma/
 tools/
 datasets/
---  stoma/
-    --  annotations/
-    --  train/
-    --  val/
+|-- finalized_data/
+    |-- image_annotation
+        Original_imgs
+    stoma/
+    |-- images/  (ln -s datasets/finalized_data/Original_imgs datasets/stoma/images)
+        annotations/ (run python datasets/create_cocofied_annotations.py)
+        val/
+    stoma_detection/ (data from the py-faster-rcnn folder)
+    |-- annotations
+        train
+        val
+    
+
 ```
 
 ## Training
