@@ -32,6 +32,7 @@ from detectron2.evaluation import (COCOEvaluator, DatasetEvaluators,
                                    SemSegEvaluator, verify_results)
 from detectron2.modeling import GeneralizedRCNNWithTTA
 from stoma.data import DatasetMapper, builtin
+from stoma.modeling import KRCNNConvHead
 
 
 class Trainer(DefaultTrainer):
@@ -111,6 +112,9 @@ def setup(args):
     Create configs and perform basic setups.
     """
     cfg = get_cfg()
+
+    # a dirty fix for the keypoint resolution config
+    cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_RESOLUTION = (14, 14)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     cfg.freeze()

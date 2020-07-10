@@ -19,4 +19,4 @@ __all__ = ["DatasetMapper"]
 class DatasetMapper(D2DatasetMapper):
     def __init__(self, cfg, is_train=True):
         super().__init__(cfg, is_train)
-        self.compute_tight_boxes = False
+        self.recompute_boxes = False
