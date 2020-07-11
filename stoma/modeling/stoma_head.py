@@ -189,6 +189,8 @@ class KRCNNConvHead(BaseKeypointRCNNHead):
                 # Caffe2 implementation uses MSRAFill, which in fact
                 # corresponds to kaiming_normal_ in PyTorch
                 nn.init.kaiming_normal_(param, mode="fan_out", nonlinearity="relu")
+        
+        nn.init.normal_(self.score_lowres.weight, mean=0.0, std=0.0001)
 
     @classmethod
     def from_config(cls, cfg, input_shape):
