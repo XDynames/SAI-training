@@ -12,6 +12,7 @@ MODEL:
     NAME: "KRCNNConvHead"
     NUM_KEYPOINTS: 2
     POOLER_RESOLUTION: (28, 56)
+    CONV_DIMS: (256, 256, 256, 256)
 DATASETS:
   TRAIN: ("stoma_train",)
   TEST: ("stoma_val",)
