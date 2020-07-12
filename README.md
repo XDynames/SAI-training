@@ -68,3 +68,8 @@ python demo/demo.py \
     --confidence-threshold 0.5 \
     --opts MODEL.WEIGHTS mask_R_50.pth
 ```
+
+| Model       | Keypoint AP | AP open | AP closed | weights |
+| ----------- | :---------: | :-----: | :-------: | ------- |
+| [28x28](configs/mask_rcnn_R_50_FPN.yaml)    | 76    | 84 | 68 | [download](https://cloudstor.aarnet.edu.au/plus/s/1AJlUYksklDsDZH) |
+| [28x56](configs/mask_rcnn_28x56.yaml)       | 77    | 87 | 67 | [downlaod](https://cloudstor.aarnet.edu.au/plus/s/WLYQxavvCB1JNQt) |
