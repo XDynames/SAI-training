@@ -11,7 +11,9 @@ import tqdm
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
+
 from predictor import VisualizationDemo
+from evaluate import record_predictions
 
 # constants
 WINDOW_NAME = "Stoma detections"
@@ -116,7 +118,10 @@ if __name__ == "__main__":
                         len(args.input) == 1
                     ), "Please specify a directory with args.output"
                     out_filename = args.output
+
                 visualized_output.save(out_filename)
+                # Hook to write predictions for evaluation
+                record_predictions(predictions['instances'], out_filename)
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
