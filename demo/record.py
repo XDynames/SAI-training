@@ -11,6 +11,8 @@ import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
 
+counter = 1 # For Figure Printing
+
 class AnnotationStore:
     def __init__(self, dir_annotations):
         self.ground_truth = self.load_ground_truth(dir_annotations)
@@ -107,7 +109,8 @@ def create_pair(i, predictions, instance_gt, coco):
         'CD_keypoints' : pred_CD,
         'width' : pred_width,
         'class' : predictions.pred_classes[i].item(),
-        'segmentation' : [pred_polygon]
+        'segmentation' : [pred_polygon],
+        'confidence' : predictions.scores[i].item()
     }
     
     # Add additional keys to ground truth
@@ -122,8 +125,11 @@ def create_pair(i, predictions, instance_gt, coco):
     return detection_pair
 
 def find_CD(polygon, keypoints):
+    global counter
     # If no mask is predicted
-    if len(polygon) < 1: return [-1,-1,1,-1,-1,1]
+    if len(polygon) < 1: 
+    #    counter += 1
+        return [-1,-1,1,-1,-1,1]
     # Convert to shapely linear ring
     x_points = [ polygon[i] for i in range(0, len(polygon), 2) ]
     y_points = [ polygon[i] for i in range(1, len(polygon), 2) ]
@@ -143,8 +149,11 @@ def find_CD(polygon, keypoints):
     #plt.plot(*mask.xy)
     #plt.plot(*l_AB.xy)
     #plt.plot(*l_perp.xy)
-    #plt.show()
-
+    #if counter % 2 == 0:
+    #    plt.savefig('visualised_plots/out-'+str(int(counter/2))+'.png')
+    #    plt.clf()
+    #counter += 1
+    
     # If there is no intersection
     if intersections.is_empty:
         return [-1,-1,1,-1,-1,1]
@@ -169,8 +178,6 @@ def mask_to_poly(mask):
     for point in poly:
         flat_poly.extend([point[0], point[1]])
     return flat_poly
-
-
 
 # Convert polygon -> binary mask COCO.annToMask
 #  Count pixels as area
