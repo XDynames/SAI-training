@@ -11,6 +11,10 @@ import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
 
+'''
+    Records predictions and ground truth pairs for an image as a JSON file
+'''
+
 counter = 1 # For Figure Printing
 
 class AnnotationStore:
@@ -54,8 +58,8 @@ def record_predictions(predictions, filename, stoma_annotations):
     print(f"# of predictions: {len(predictions.pred_boxes)}")
     print(f"# of ground truth: {len(image_gt)}")
     remove_intersecting_predictions(predictions)
-    image_json = { image_name : assign_preds_gt(predictions, image_gt, coco) }
-    print(f"Matched: {len(image_json[image_name])}")
+    image_json = { 'detections' : assign_preds_gt(predictions, image_gt, coco) }
+    print(f"Matched: {len(image_json['detections'])}")
 
     with open('.'.join([filename[:-4], 'json']), 'w') as file:
         json.dump(image_json, file)
@@ -117,6 +121,7 @@ def create_pair(i, predictions, instance_gt, coco):
     instance_gt['width'] = gt_width
     instance_gt['CD_keypoinys'] = gt_CD
     instance_gt['area'] = calc_area(instance_gt, coco)
+    instance_gt['length'] = l2_dist(instance_gt['keypoints'])
 
     detection_pair = {
         'gt' : instance_gt,
