@@ -11,15 +11,44 @@ import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
 
-def record_predictions(predictions, filename):
-    # Load and format groung truth (TODO: Move to object to prevent reloading)
-    ground_truth = load_ground_truth('datasets/stoma/annotations/val.json')
-    filename_id_map = create_filename_id_map(ground_truth)
-    # TODO: Move to object property
-    coco = COCO('datasets/stoma/annotations/val.json')
+class AnnotationStore:
+    def __init__(self, dir_annotations):
+        self.ground_truth = self.load_ground_truth(dir_annotations)
+        self.filename_id_map = self.create_filename_id_map(self.ground_truth)
+        self.coco = COCO(dir_annotations)
+
+    def load_ground_truth(self, gt_filepath):
+        with open(gt_filepath) as file:
+            raw_gt = json.load(file)
+        # Associate image-id with filenames
+        gt_formatted = dict()
+        for image_details in raw_gt['images']:
+            image_id = image_details['id']
+            gt_formatted[image_id] = { 
+                'filename' : image_details['file_name'],
+                'annotations' : list() 
+            }
+        # Assign instance annotations to images
+        for annotation in raw_gt['annotations']:
+            image_id = annotation['image_id']
+            gt_formatted[image_id]['annotations'].append(annotation)
+        return gt_formatted
+
+    def create_filename_id_map(self, ground_truth_dict):
+        file_id_map = dict()
+        for image_id in ground_truth_dict.keys():
+            name = ground_truth_dict[image_id]['filename']
+            file_id_map[name] = image_id
+        return file_id_map
+
+def record_predictions(predictions, filename, stoma_annotations):
+    ground_truth = stoma_annotations.ground_truth
+    filename_id_map = stoma_annotations.filename_id_map
+    coco = stoma_annotations.coco
+
     image_name = filename.split('/')[-1]
     image_gt = ground_truth[filename_id_map[image_name]]['annotations']
-    
+
     print(f"# of predictions: {len(predictions.pred_boxes)}")
     print(f"# of ground truth: {len(image_gt)}")
     remove_intersecting_predictions(predictions)
@@ -141,29 +170,7 @@ def mask_to_poly(mask):
         flat_poly.extend([point[0], point[1]])
     return flat_poly
 
-def load_ground_truth(gt_filepath):
-    with open(gt_filepath) as file:
-        raw_gt = json.load(file)
-    # Associate image-id with filenames
-    gt_formatted = dict()
-    for image_details in raw_gt['images']:
-        image_id = image_details['id']
-        gt_formatted[image_id] = { 
-            'filename' : image_details['file_name'],
-            'annotations' : list() 
-        }
-    # Assign instance annotations to images
-    for annotation in raw_gt['annotations']:
-        image_id = annotation['image_id']
-        gt_formatted[image_id]['annotations'].append(annotation)
-    return gt_formatted
 
-def create_filename_id_map(ground_truth_dict):
-    file_id_map = dict()
-    for image_id in ground_truth_dict.keys():
-        name = ground_truth_dict[image_id]['filename']
-        file_id_map[name] = image_id
-    return file_id_map
 
 # Convert polygon -> binary mask COCO.annToMask
 #  Count pixels as area
