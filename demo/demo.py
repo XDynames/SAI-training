@@ -11,7 +11,9 @@ import tqdm
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
+
 from predictor import VisualizationDemo
+from record import record_predictions, AnnotationStore
 
 # constants
 WINDOW_NAME = "Stoma detections"
@@ -55,7 +57,11 @@ def get_parser():
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
     )
-
+    parser.add_argument(
+        "--annotations",
+        default="datasets/stoma/annotations/val.json",
+        help="Path to file containing image ground truth annotations"
+    )
     parser.add_argument(
         "--confidence-threshold",
         type=float,
@@ -81,6 +87,9 @@ if __name__ == "__main__":
     cfg = setup_cfg(args)
 
     demo = VisualizationDemo(cfg)
+
+    # Stores annotation information
+    stoma_annotations = AnnotationStore(args.annotations)
 
     if args.input:
         if os.path.isdir(args.input[0]):
@@ -116,7 +125,14 @@ if __name__ == "__main__":
                         len(args.input) == 1
                     ), "Please specify a directory with args.output"
                     out_filename = args.output
+
                 visualized_output.save(out_filename)
+                # Hook to write predictions for evaluation
+                record_predictions(
+                    predictions['instances'],
+                    out_filename,
+                    stoma_annotations
+                )
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
