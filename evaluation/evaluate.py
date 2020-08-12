@@ -4,6 +4,8 @@ import argparse
 
 import matplotlib.pyplot as plt
 
+from legacy_annotation_parser import read_legacy_val
+
 def get_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -14,6 +16,11 @@ def get_arguments():
     parser.add_argument(
         "--csv_output",
         help="Where to save .csv version of data",
+        default=None
+    )
+    parser.add_argument(
+        "--legacy_csv",
+        help="Predictions from legacy RCNN model",
         default=None
     )
     return parser.parse_args()
@@ -44,7 +51,7 @@ def associate_ids_to_pars(image_dicts):
             stoma_properties[gt['id']] = property_pairs
     return stoma_properties
 
-def extract_property(stoma_id_dict, key): 
+def extract_property(stoma_id_dict, key):
     property_pairs = []
     for stoma_id in stoma_id_dict.keys():
         property_pair = stoma_id_dict[stoma_id]
@@ -58,11 +65,14 @@ def write_to_csv(stoma_id_dict, filepath):
         'id','class','pred_class','length','pred_length',
         'width','pred_width','area','pred_area','confidence'
     ]
+    colums_keys = [
+        'class', 'length', 'width', 'area', 'confidence'
+    ]
     csv = ','.join(column_names) + '\n'
     for key in stoma_id_dict.keys():
         values = [key]
         detection = stoma_id_dict[key]
-        for stoma_property in detection.keys():
+        for stoma_property in colums_keys:
             if stoma_property == 'confidence':
                 values.append(detection[stoma_property])
             else:
@@ -76,18 +86,19 @@ def write_to_csv(stoma_id_dict, filepath):
     with open(filepath, "w") as file:
         file.write(csv)
 
-def plot_scatter(data, line_range, title):
-    gt = [ point[0] for point in data ]
-    pred = [ point[1] for point in data ]
+def plot_x_y_line(line_range, title):
     x = [ i / 2 for i in range(line_range[0],line_range[1]) ]
     y = x
     plt.plot(x, y, label="y = x")
     plt.title(title)
+
+def plot_scatter(data, label, colour):
+    gt = [ point[0] for point in data ]
+    pred = [ point[1] for point in data ]
     plt.xlabel("Observed (pixels)")
     plt.ylabel("Predicted (pixels)")
-    plt.scatter(gt, pred, label="RCNN v2")
+    plt.scatter(gt, pred, label=label, c=colour)
     plt.legend(loc='lower right')
-    plt.show()
 
 if __name__=='__main__':
     # Get Commandline arguments
@@ -104,9 +115,30 @@ if __name__=='__main__':
     # Covert to csv formatted file
     if not args.csv_output == None:
         write_to_csv(stoma_id_pairs, args.csv_output)
+    if not args.legacy_csv == None:
+        files = os.listdir(args.legacy_csv)
+        legacy_all_preds = []
+        for file in files:
+            # Loads in area, length and width in that order
+            legacy_open_closed_paris = read_legacy_val(os.path.join(args.legacy_csv, file))
+            legacy_all_pairs = [ x for y in legacy_open_closed_paris for x in y ]
+            legacy_all_preds.append(legacy_all_pairs)
+        print(legacy_all_preds)
+    
     # Display Plots
-    plot_scatter(width_pairs, [0,140], "Width Predictions")
-    plot_scatter(length_pairs, [160,400], "Length Predictions")
-    plot_scatter(area_pairs, [0,17000], "Area Predictions")
-
+    plot_x_y_line([0,140], "Width Predictions")
+    plot_scatter(width_pairs, "RCNN v2", '#2ca02c')
+    if not args.legacy_csv == None:
+        plot_scatter(legacy_all_preds[2], "Legacy RCNN", '#ff7f0e')
+    plt.show()
+    plot_x_y_line([160,400], "Length Predictions")
+    plot_scatter(length_pairs, "RCNN v2", '#2ca02c')
+    if not args.legacy_csv == None:
+        plot_scatter(legacy_all_preds[1], "Legacy RCNN", '#ff7f0e')
+    plt.show()
+    plot_x_y_line([0,17000], "Area Predictions")
+    plot_scatter(area_pairs, "RCNN v2", '#2ca02c')
+    if not args.legacy_csv == None:
+        plot_scatter(legacy_all_preds[0], "Legacy RCNN", '#ff7f0e')
+    plt.show()
 
