@@ -88,31 +88,44 @@ def create_pair(i, predictions, instance_gt, coco):
     # Extract and format predictions
     pred_mask = predictions.pred_masks[i].cpu().numpy()
     pred_AB = predictions.pred_keypoints[i].flatten().tolist()
+    pred_class = predictions.pred_classes[i].item()
 
-    if instance_gt['category_id'] == 1:
+    if  pred_class == 1:
         # Processes prediction mask
         pred_polygon = mask_to_poly(pred_mask)
-        pred_CD = find_CD(pred_polygon, pred_AB)
+        pred_CD = find_CD(pred_polygon, gt=False)
         pred_width = l2_dist(pred_CD)
+        pred_area = pred_mask.sum().item()
+    else:
+        pred_polygon = []
+        pred_CD = [-1, -1, 1. -1, -1, 1]
+        pred_width = 0
+        pred_area = 0
+
+    if instance_gt['category_id'] == 1:
         # Process ground truth mask
         gt_CD = find_CD(instance_gt['segmentation'][0], instance_gt['keypoints'])
         gt_width = l2_dist(gt_CD)
+        instance_gt['area'] = calc_area(instance_gt, coco)
     else:
         # Placehold values for no prediction
-        pred_polygon = []
-        pred_CD = [-1,-1,1.-1,-1.1]
-        pred_width = 0
-        gt_CD = [-1,-1,1,-1,-1,1]
         gt_width = 0
+        gt_CD = [-1, -1, 1, -1, -1, 1]
+        instance_gt['area'] = 0
+    
+    # For visual check
+    if not instance_gt['category_id'] == pred_class:
+        global counter
+        counter+=1
 
     pred = { 
         'bbox' : predictions.pred_boxes[i].tensor.tolist()[0],
-        'area' : pred_mask.sum().item(),
+        'area' : pred_area,
         'AB_keypoints' : pred_AB,
         'length' : l2_dist(pred_AB),
         'CD_keypoints' : pred_CD,
         'width' : pred_width,
-        'class' : predictions.pred_classes[i].item(),
+        'class' : pred_class,
         'segmentation' : [pred_polygon],
         'confidence' : predictions.scores[i].item()
     }
@@ -120,7 +133,6 @@ def create_pair(i, predictions, instance_gt, coco):
     # Add additional keys to ground truth
     instance_gt['width'] = gt_width
     instance_gt['CD_keypoinys'] = gt_CD
-    instance_gt['area'] = calc_area(instance_gt, coco)
     instance_gt['length'] = l2_dist(instance_gt['keypoints'])
 
     detection_pair = {
@@ -129,12 +141,14 @@ def create_pair(i, predictions, instance_gt, coco):
     }
     return detection_pair
 
-def find_CD(polygon, keypoints):
+def find_CD(polygon, keypoints=None, gt=True):
     global counter
     # If no mask is predicted
     if len(polygon) < 1: 
     #    counter += 1
         return [-1,-1,1,-1,-1,1]
+    if keypoints == None:
+        keypoints = extract_polygon_AB(polygon)
     # Convert to shapely linear ring
     x_points = [ polygon[i] for i in range(0, len(polygon), 2) ]
     y_points = [ polygon[i] for i in range(1, len(polygon), 2) ]
@@ -146,19 +160,21 @@ def find_CD(polygon, keypoints):
 
     l_AB = shapes.LineString([A, B])
     l_perp = affinity.rotate(l_AB, 90)
-    #l_perp = affinity.scale(l_perp, 100, 100)
+    l_perp = affinity.scale(l_perp, 2, 2)
     # Find intersection with polygon
     intersections = l_perp.intersection(mask)
-
+    '''
     # Visual check
-    #plt.plot(*mask.xy)
-    #plt.plot(*l_AB.xy)
-    #plt.plot(*l_perp.xy)
-    #if counter % 2 == 0:
-    #    plt.savefig('visualised_plots/out-'+str(int(counter/2))+'.png')
-    #    plt.clf()
-    #counter += 1
-    
+    plt.plot(*mask.xy)
+    plt.plot(*l_AB.xy)
+    plt.plot(*l_perp.xy)
+    if counter % 2 == 0:
+        plt.savefig('visualised_plots/out-'+str(int(counter/2))+'.png')
+        plt.clf()
+    elif gt:
+        plt.clf()
+    counter += 1
+    '''
     # If there is no intersection
     if intersections.is_empty:
         return [-1,-1,1,-1,-1,1]
@@ -208,3 +224,19 @@ def gt_intersects(bbox, gt_bbox):
         gt_bbox[1] + gt_bbox[3]
     ]
     return intersects(bbox, gt_bbox)
+
+def list_argmax(l): return max(range(len(l)), key=lambda i: l[i])
+def list_argmin(l): return min(range(len(l)), key=lambda i: l[i])
+
+def extract_polygon_AB(polygon):
+    x_values = [ x for x in polygon[0::2] ]
+    y_values = [ y for y in polygon[1::2] ]
+
+    i_min_x, i_max_x = list_argmin(x_values), list_argmax(x_values)
+    i_min_y, i_max_y = list_argmin(y_values), list_argmax(y_values)
+
+    keypoints = [
+        x_values[i_min_x], y_values[i_min_x], 1,
+        x_values[i_max_x], y_values[i_max_x], 1
+    ]
+    return keypoints
