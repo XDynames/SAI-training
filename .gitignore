@@ -9,6 +9,7 @@ inference_test_output
 *.txt
 *.json
 *.diff
+*.csv
 
 # compilation and distribution
 __pycache__
