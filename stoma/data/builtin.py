@@ -54,4 +54,4 @@ def register_stoma(root):
 # TODO: add datasets and splits for Stomata measurements here
 
 
-register_stoma("datasets")
+# register_stoma("datasets")
