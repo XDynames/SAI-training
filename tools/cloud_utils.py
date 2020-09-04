@@ -14,7 +14,7 @@ class GoogleCloudHandler(PathHandler):
         Returns:
             List[str]: the list of URI prefixes this PathHandler can support
         """
-        return ["gs://"]
+        return ["gs://", "gs"]
 
     def _get_local_path(self, path: str, **kwargs: Any) -> str:
         """
