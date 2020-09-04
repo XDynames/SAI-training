@@ -73,7 +73,8 @@ class GoogleCloudHandler(PathHandler):
             file: a file-like object.
         """
         maybe_make_directory(get_local_cache_directory(path))
-        self._cache_remote_file(path)
+        if self._exists(path):
+            self._cache_remote_file(path)
         return self._open_local_copy(path, mode) 
 
     def _copy(
