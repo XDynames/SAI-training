@@ -124,7 +124,7 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
-    buitlin.register_stoma(args.datatset_root)
+    builtin.register_stoma(args.dataset_dir)
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
@@ -154,7 +154,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = default_argument_parser()
-    parser.add_argument("--dataset-dir", default="datasets")
+    parser.add_argument("--dataset_dir", default="datasets")
     args = parser.parse_args()
     print("Command Line Args:", args)
     launch(
