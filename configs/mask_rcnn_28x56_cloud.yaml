@@ -20,3 +20,5 @@ TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
 OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56
+SOLVER:
+  IMS_PER_BATCH: 16
