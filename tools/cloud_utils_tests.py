@@ -22,7 +22,7 @@ class TestCloudUtils(unittest.TestCase):
 
     def test_supported_prefixes(self):
         supported_prefixes = self.gc_pathhandler._get_supported_prefixes()
-        self.assertEqual(supported_prefixes, ["gs://", "gs"])
+        self.assertEqual(supported_prefixes, ["gs://"])
     
     def test_remove_file_system_from_remote_path(self):
         path = remove_file_system('/'.join([self.gc_default_path, 'path/file.txt']))

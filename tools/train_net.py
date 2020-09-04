@@ -31,9 +31,14 @@ from detectron2.engine import (DefaultTrainer, default_argument_parser,
 from detectron2.evaluation import (COCOEvaluator, DatasetEvaluators,
                                    SemSegEvaluator, verify_results)
 from detectron2.modeling import GeneralizedRCNNWithTTA
+from fvcore.common.file_io import PathManager
+from detectron
 from stoma.data import DatasetMapper, builtin
 from stoma.modeling import KRCNNConvHead
+from tools.cloud_utils import GoogleCloudHandler
 
+# Add to fvcore's global pathmanger
+PathManager.register_handler(GoogleCloudHandler())
 
 class Trainer(DefaultTrainer):
     """

@@ -5,7 +5,7 @@ from typing import IO
 import io
 
 from google.cloud import storage
-from fvcore.common.file_io import PathManager, PathHandler
+from fvcore.common.file_io import PathHandler
 
 class GoogleCloudHandler(PathHandler):
 
@@ -14,7 +14,7 @@ class GoogleCloudHandler(PathHandler):
         Returns:
             List[str]: the list of URI prefixes this PathHandler can support
         """
-        return ["gs://", "gs"]
+        return ["gs://"]
 
     def _get_local_path(self, path: str, **kwargs: Any) -> str:
         """
@@ -238,6 +238,3 @@ def get_local_cache_directory(path:str) -> str:
     path = get_local_cache_path(path)
     return path.replace(path.split('/')[-1], '')
 
-
-# Add to fvcore's global pathmanger
-PathManager.register_handler(GoogleCloudHandler())
