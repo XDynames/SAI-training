@@ -124,7 +124,7 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
-    builtin.register_stoma(args.datatset_dir)
+    builtin.register_stoma(args.dataset_dir)
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
