@@ -124,7 +124,7 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
-    buitlin.register_stoma(args.datatset_root)
+    builtin.register_stoma(args.datatset_root)
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
