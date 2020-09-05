@@ -117,6 +117,27 @@ class TestCloudUtils(unittest.TestCase):
         self.assertTrue(isinstance(file, io.TextIOWrapper))
         self.assertEqual(file.read(), "Retrieved from GC")
         file.close()
+    def write_message_with_open(self, path:str, message:str, mode:str):
+        file = self.gc_pathhandler._open(path, mode)
+        file.write(message)
+        file.close()
+    def read_remote_file(self, path:str, mode:str) -> str:
+        with self.gc_pathhandler._open(path, mode) as file:
+            read = file.read()
+        return read
+    def test_open_write_new_text_file(self):
+        remote_path = '/'.join([self.gc_default_path, 'path/test_open_write.txt'])
+        message = 'File created locally and uploaded with _open'
+        self.write_message_with_open(remote_path, message, 'w')
+        read = self.read_remote_file(remote_path, 'r')
+        self.assertEqual(read, 'File created locally and uploaded with _open')
+    def test_open_write_existing_text_file(self):
+        remote_path = '/'.join([self.gc_default_path, 'path/test_open_write.txt'])
+        message = 'Written to existing upload'
+        self.write_message_with_open(remote_path, message, 'w')
+        read = self.read_remote_file(remote_path, 'r')
+        self.assertEqual(read, 'Written to existing upload')
+
     def test_copy_from_local_file_exists(self):
         maybe_make_directory('./tmp/')
         remote_path = '/'.join([self.gc_default_path, 'path/uploaded.txt'])
@@ -125,8 +146,7 @@ class TestCloudUtils(unittest.TestCase):
             file.write('Local file to test uploading')
         isUploaded = self.gc_pathhandler._copy_from_local(local_path, remote_path)
         self.assertTrue(isUploaded)
-        with self.gc_pathhandler._open(remote_path) as file:
-            read = file.read()
+        read = self.read_remote_file(remote_path, 'r')
         self.assertEqual(read, 'Local file to test uploading')
     def test_copy_from_local_file_doesnt_exist(self):
         local_path = '/file/that/doesnt/exist.txt'
@@ -139,8 +159,7 @@ class TestCloudUtils(unittest.TestCase):
         isCopied = self.gc_pathhandler._copy(remote_source, remote_destination)
         self.assertTrue(isCopied)
         self.assertTrue(self.gc_pathhandler._exists(remote_destination))
-        with self.gc_pathhandler._open(remote_destination) as file:
-            read = file.read()
+        read = self.read_remote_file(remote_destination, 'r')
         self.assertEqual(read, 'Local file to test uploading')
     def test_copy_remote_file_doesnt_exist(self):
         remote_source = '/'.join([self.gc_default_path, 'doesnt/exist.txt'])
@@ -148,7 +167,6 @@ class TestCloudUtils(unittest.TestCase):
         isCopied = self.gc_pathhandler._copy(remote_source, remote_destination)
         self.assertFalse(isCopied)
         self.assertFalse(self.gc_pathhandler._exists(remote_destination))
-        pass
     def test_get_local_path_remote_file_exists(self):
         remote_path = '/'.join([self.gc_default_path, 'path/uploaded.txt'])
         cache_path = self.gc_pathhandler._get_local_path(remote_path)

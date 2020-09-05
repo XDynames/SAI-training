@@ -7,6 +7,7 @@ import io
 from google.cloud import storage
 from fvcore.common.file_io import PathHandler
 
+
 class GoogleCloudHandler(PathHandler):
 
     def _get_supported_prefixes(self) -> List[str]:
@@ -29,10 +30,7 @@ class GoogleCloudHandler(PathHandler):
         Returns:
             local_path (str): a file path which exists on the local file system
         """
-        local_directory = get_local_cache_directory(path)
-        maybe_make_directory(local_directory)
-        if self._exists(path): 
-            self._cache_remote_file(path)
+        self._cache_remote_file(path)
         return get_local_cache_path(path)
 
     def _copy_from_local(
@@ -72,9 +70,7 @@ class GoogleCloudHandler(PathHandler):
         Returns:
             file: a file-like object.
         """
-        maybe_make_directory(get_local_cache_directory(path))
-        if self._exists(path):
-            self._cache_remote_file(path)
+        self._cache_remote_file(path)
         return self._open_local_copy(path, mode) 
 
     def _copy(
@@ -173,6 +169,7 @@ class GoogleCloudHandler(PathHandler):
         return gc_bucket.blob(extract_blob_path(path))
     
     def _cache_blob(self, local_path:str, gc_blob:storage.Blob):
+        if not gc_blob.exists(): return
         with open(local_path, 'wb') as file:
             gc_blob.download_to_file(file)
 
@@ -183,6 +180,8 @@ class GoogleCloudHandler(PathHandler):
 
     def _cache_remote_file(self, remote_path:str):
         local_path = get_local_cache_path(remote_path)
+        local_directory = get_local_cache_directory(remote_path)
+        maybe_make_directory(local_directory)
         gc_blob = self._get_blob(remote_path)
         self._cache_blob(local_path, gc_blob)
         
@@ -238,4 +237,3 @@ def get_local_cache_path(path:str) -> str:
 def get_local_cache_directory(path:str) -> str:
     path = get_local_cache_path(path)
     return path.replace(path.split('/')[-1], '')
-
