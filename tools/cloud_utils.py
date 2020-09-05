@@ -3,10 +3,12 @@ import types
 from typing import *
 from typing import IO
 import io
+import threading
 
 from google.cloud import storage
 from fvcore.common.file_io import PathHandler
 
+mutex = threading.Lock()
 
 class GoogleCloudHandler(PathHandler):
 
@@ -213,10 +215,15 @@ def decorate_file_with_gc_methods(
     file.close = types.MethodType(close_and_upload, file)
 
 def maybe_make_directory(path:str) -> bool:
+    is_made = False
+
+    mutex.acquire()
     if not os.path.exists(path):
         os.makedirs(path)
-        return True
-    return False
+        is_made = True
+    mutex.release()
+    
+    return is_made
 
 def extract_gc_namespace(path:str) -> str:
     return extract_gc_bucket_name(path).replace("-data", "")
