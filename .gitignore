@@ -47,5 +47,7 @@ wheels/
 /projects/*/datasets
 /models
 /debug
+/tools/tmp
+/tmp
 
-.DS_Store
+.DS_Store/

@@ -75,7 +75,14 @@ def line2seg(line):
     ]
     return keypoints, segmentation
 
-
+def visualise_bndbox(self, anno_dict, stoma_dict):
+    image_path = os.path.join(args.img_dir, anno_dict["filename"])
+    img = Image.open(image_path)
+    vis_pore = Visualizer(img)
+    img = vis_pore.draw_box([ int(x) for x in stoma_dict['bndbox'].values()])
+    img = Image.fromarray(img.get_image(),'RGB')
+    img.show()
+    
 def bndbox2array(bndbox):
     return list(
         map(int, [bndbox["xmin"], bndbox["ymin"], bndbox["xmax"], bndbox["ymax"]])
@@ -235,12 +242,21 @@ if __name__ == "__main__":
         )
     )
 
-    # copy validation images for demo
-    if not os.path.exists(args.val_dir):
-        os.makedirs(args.val_dir)
-    for val_file in val_list:
-        img_file = os.path.splitext(val_file)[0] + ".png"
-        shutil.copyfile(os.path.join(args.img_dir, img_file), os.path.join(args.val_dir, img_file))
+    # Convert jpgs to pngs
+    for file in anno_list:
+        if file[-4:] == ".jpg":
+            img = Image.open(file)
+            file = os.path.splitext(file) + ".png"
+            Image.save(file)
+
+    # Convert jpgs to pngs
+    image_list = os.listdir(args.img_dir)
+    for file in image_list:
+        image_path = os.path.join(args.img_dir, file)
+        new_image_path = ".".join([image_path[:-4], "png"])
+        if file[-4:] == ".jpg" and not os.path.exists(new_image_path):
+            img = Image.open(image_path)
+            img.save(new_image_path)
 
     annotation_id = 0
     image_id = 0
