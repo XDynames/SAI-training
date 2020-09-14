@@ -21,7 +21,7 @@ TEST:
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
 OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_higherres
 SOLVER:
-  IMS_PER_BATCH: 8
+  IMS_PER_BATCH: 4
   MAX_ITER: 100000
 INPUT:
   MIN_SIZE_TRAIN: (1200, 2048)
