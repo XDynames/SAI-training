@@ -22,7 +22,7 @@ TEST:
 OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_highres_inf
 SOLVER:
   IMS_PER_BATCH: 8
-  MAX_ITER: 100000
+  MAX_ITER: 150000
 INPUT:
   MIN_SIZE_TEST: 0
   MAX_SIZE_TEST: 2048
