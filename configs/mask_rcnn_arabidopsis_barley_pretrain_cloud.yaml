@@ -19,6 +19,6 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_26x58_barley_pretrain_arabidopsis
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_barley_pretrain_arabidopsis
 SOLVER:
   IMS_PER_BATCH: 10
