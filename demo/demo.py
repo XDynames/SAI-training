@@ -14,6 +14,7 @@ from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
 from stoma.modeling import KRCNNConvHead
+from stoma.data.builtin import register_stoma
 from record import record_predictions, AnnotationStore
 
 # constants
@@ -99,6 +100,7 @@ if __name__ == "__main__":
 
     if args.input:
         if os.path.isdir(args.input[0]):
+            register_stoma("datasets")
             args.input = [
                 os.path.join(args.input[0], fname)
                 for fname in os.listdir(args.input[0])

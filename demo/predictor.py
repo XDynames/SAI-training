@@ -3,6 +3,7 @@ import atexit
 import bisect
 import multiprocessing as mp
 from collections import deque
+import types
 
 import cv2
 import torch
@@ -11,8 +12,6 @@ from detectron2.data import MetadataCatalog
 from detectron2.engine.defaults import DefaultPredictor
 from detectron2.utils.video_visualizer import VideoVisualizer
 from detectron2.utils.visualizer import ColorMode, Visualizer
-
-from stoma.data import builtin
 
 
 class VisualizationDemo(object):
@@ -52,6 +51,13 @@ class VisualizationDemo(object):
         # Convert image from OpenCV BGR format to Matplotlib RGB format.
         image = image[:, :, ::-1]
         visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
+        # Monkey Patch to draw thinner lines
+        def draw_thin_line(self, x_data, y_data, color, linestyle="-", linewidth=2):
+            self._draw_line(x_data, y_data, color, "-", linewidth)
+
+        visualizer._draw_line = visualizer.draw_line
+        visualizer.draw_line = types.MethodType(draw_thin_line, visualizer)
+
         if "panoptic_seg" in predictions:
             panoptic_seg, segments_info = predictions["panoptic_seg"]
             vis_output = visualizer.draw_panoptic_seg_predictions(
