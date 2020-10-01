@@ -1,0 +1,23 @@
+_BASE_: "Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: True
+  KEYPOINT_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NUM_CLASSES: 2
+  ROI_KEYPOINT_HEAD:
+    NAME: "KRCNNConvHead"
+    NUM_KEYPOINTS: 2
+    POOLER_RESOLUTION: (28, 56)
+    CONV_DIMS: (256, 256)
+DATASETS:
+  TRAIN: ("stoma_train",)
+  TEST: ("stoma_val",)
+TEST:
+  EVAL_PERIOD: 5000
+  KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
+OUTPUT_DIR: output/mask/R_50_reduced_head
+SOLVER:
+  IMS_PER_BATCH: 16
