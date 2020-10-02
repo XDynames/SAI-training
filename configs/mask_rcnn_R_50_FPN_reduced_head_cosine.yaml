@@ -18,7 +18,7 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: output/mask/R_50_reduced_head_cosine
+OUTPUT_DIR: gs://aiml-sscv-data/output/mask/R_50_reduced_head_cosine
 SOLVER:
   LR_SCHEDULER_NAME: WarmupCosineLR
   IMS_PER_BATCH: 16
