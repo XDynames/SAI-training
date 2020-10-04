@@ -18,6 +18,6 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_reduced_head
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_reduced_head_high_dim
 SOLVER:
   IMS_PER_BATCH: 16
