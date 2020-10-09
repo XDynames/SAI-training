@@ -34,7 +34,7 @@ class AnnotationStore:
             image_id = image_details['id']
             gt_formatted[image_id] = { 
                 'filename' : image_details['file_name'],
-                'annotations' : list() 
+                'annotations' : list()
             }
         # Assign instance annotations to images
         for annotation in raw_gt['annotations']:
