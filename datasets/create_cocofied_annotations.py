@@ -11,15 +11,30 @@ from detectron2.utils.logger import setup_logger
 
 
 def get_parser():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
     parser.add_argument(
         "--anno-dir",
+        default="datasets/finalized_data/image_annotation",
         help="path to annotation xmls",
     )
     parser.add_argument(
+        "--img-dir",
+        default="datasets/finalized_data/Original_imgs",
+        help="path to annotation xmls",
+    )
+    parser.add_argument(
+        "--val-dir",
+        default="datasets/stoma/val",
+        help="path to validation dataset",
+    )
+    parser.add_argument(
         "--output",
+        default="datasets/stoma/annotations",
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
+    )
+    parser.add_argument(
+        "--num-train", type=int, default=150, help="Number of training images"
     )
     return parser
 
