@@ -255,10 +255,21 @@ def extract_polygon_AB(polygon):
     y_values = [ y for y in polygon[1::2] ]
 
     i_min_x, i_max_x = list_argmin(x_values), list_argmax(x_values)
-    i_min_y, i_max_y = list_argmin(y_values), list_argmax(y_values)
+    x_min, x_max = x_values[i_min_x], x_values[i_max_x]
+    
+    left_hand_y_values, right_hand_y_values = [], []
+    for i, y in enumerate(y_values):
+        if x_max == x_values[i]:
+            right_hand_y_values.append(y)
+        if x_min == x_values[i]:
+            left_hand_y_values.append(y)
+
+    # Use midpoint of extreme y values as keypoint value
+    right_hand_y = (right_hand_y_values[0] + right_hand_y_values[-1]) / 2
+    left_hand_y = (left_hand_y_values[0] + left_hand_y_values[-1]) / 2
 
     keypoints = [
-        x_values[i_min_x], y_values[i_min_x], 1,
-        x_values[i_max_x], y_values[i_max_x], 1
+        x_min, left_hand_y, 1,
+        x_max, right_hand_y, 1
     ]
     return keypoints
