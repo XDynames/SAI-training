@@ -36,6 +36,10 @@ def get_parser():
     parser.add_argument(
         "--num-train", type=int, default=150, help="Number of training images"
     )
+    parser.add_argument(
+        "--shuffled-splits", action='store_true',
+        help="Sets split generation mode to deterministic uniform sampling"
+    )
     return parser
 
 
@@ -233,21 +237,26 @@ if __name__ == "__main__":
     anno_list = os.listdir(args.anno_dir)
 
     # split into train and val
-    train_list = anno_list[: args.num_train]
-    val_list = anno_list[args.num_train :]
+    if args.shuffled_splits:
+        n_validation = len(anno_list) - args.num_train
+        sampling_frequency = len(anno_list) // n_validation
+        print(sampling_frequency)
+        i_val = [ x * sampling_frequency for x in range(n_validation) ] 
+        print(i_val)
+        i_train = list({ x for x in range(len(anno_list)) } - set(i_val))
+        print(i_train)
+        train_list = [ anno_list[i] for i in i_train ] 
+        val_list = [ anno_list[i] for i in i_val ]
+        print(len(train_list), len(val_list))
+    else:
+        train_list = anno_list[: args.num_train]
+        val_list = anno_list[args.num_train :]
 
     logger.info(
         "Creating datasets with {} train samples and {} validation samples.".format(
             len(train_list), len(val_list)
         )
     )
-
-    # Convert jpgs to pngs
-    for file in anno_list:
-        if file[-4:] == ".jpg":
-            img = Image.open(file)
-            file = os.path.splitext(file) + ".png"
-            Image.save(file)
 
     # Convert jpgs to pngs
     image_list = os.listdir(args.img_dir)
