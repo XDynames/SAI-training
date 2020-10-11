@@ -240,14 +240,10 @@ if __name__ == "__main__":
     if args.shuffled_splits:
         n_validation = len(anno_list) - args.num_train
         sampling_frequency = len(anno_list) // n_validation
-        print(sampling_frequency)
-        i_val = [ x * sampling_frequency for x in range(n_validation) ] 
-        print(i_val)
+        i_val = [ x * sampling_frequency for x in range(n_validation) ]
         i_train = list({ x for x in range(len(anno_list)) } - set(i_val))
-        print(i_train)
         train_list = [ anno_list[i] for i in i_train ] 
         val_list = [ anno_list[i] for i in i_val ]
-        print(len(train_list), len(val_list))
     else:
         train_list = anno_list[: args.num_train]
         val_list = anno_list[args.num_train :]
