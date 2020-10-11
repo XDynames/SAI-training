@@ -18,10 +18,12 @@ from mask_to_polygons.vectorification import geometries_from_mask
 counter = 1 # For Figure Printing
 
 class AnnotationStore:
-    def __init__(self, dir_annotations):
+    def __init__(self, dir_annotations, retrieval=False):
         self.ground_truth = self.load_ground_truth(dir_annotations)
         self.filename_id_map = self.create_filename_id_map(self.ground_truth)
         self.coco = COCO(dir_annotations)
+        if retrieval:
+            self._pore_id_to_filename = self._create_pore_to_file_map(self.ground_truth)
 
     def load_ground_truth(self, gt_filepath):
         with open(gt_filepath) as file:
@@ -32,7 +34,7 @@ class AnnotationStore:
             image_id = image_details['id']
             gt_formatted[image_id] = { 
                 'filename' : image_details['file_name'],
-                'annotations' : list() 
+                'annotations' : list()
             }
         # Assign instance annotations to images
         for annotation in raw_gt['annotations']:
@@ -46,6 +48,26 @@ class AnnotationStore:
             name = ground_truth_dict[image_id]['filename']
             file_id_map[name] = image_id
         return file_id_map
+
+    def _create_pore_to_file_map(self, gt_dict):
+        pore_to_file_map = dict()
+        for image_id in gt_dict:
+            image_gt = gt_dict[image_id]
+            file = image_gt['filename']
+            for pore_gt in image_gt['annotations']:
+                pore_to_file_map[pore_gt['id']] = file
+        return pore_to_file_map
+    
+    def retrieve_pore(self, pore_id):
+        filename = self._pore_id_to_filename[pore_id]
+        image_id = self.filename_id_map[filename]
+        image_annotations = self.ground_truth[image_id]['annotations']
+
+        for image_annotation in image_annotations:
+            if image_annotation['id'] == pore_id:
+                pore_annotation = image_annotation
+                break
+        return [filename, pore_annotation]
 
 def record_predictions(predictions, filename, stoma_annotations):
     ground_truth = stoma_annotations.ground_truth
@@ -233,10 +255,21 @@ def extract_polygon_AB(polygon):
     y_values = [ y for y in polygon[1::2] ]
 
     i_min_x, i_max_x = list_argmin(x_values), list_argmax(x_values)
-    i_min_y, i_max_y = list_argmin(y_values), list_argmax(y_values)
+    x_min, x_max = x_values[i_min_x], x_values[i_max_x]
+    
+    left_hand_y_values, right_hand_y_values = [], []
+    for i, y in enumerate(y_values):
+        if x_max == x_values[i]:
+            right_hand_y_values.append(y)
+        if x_min == x_values[i]:
+            left_hand_y_values.append(y)
+
+    # Use midpoint of extreme y values as keypoint value
+    right_hand_y = (right_hand_y_values[0] + right_hand_y_values[-1]) / 2
+    left_hand_y = (left_hand_y_values[0] + left_hand_y_values[-1]) / 2
 
     keypoints = [
-        x_values[i_min_x], y_values[i_min_x], 1,
-        x_values[i_max_x], y_values[i_max_x], 1
+        x_min, left_hand_y, 1,
+        x_max, right_hand_y, 1
     ]
     return keypoints

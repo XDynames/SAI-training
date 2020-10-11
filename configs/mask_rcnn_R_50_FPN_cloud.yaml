@@ -15,6 +15,6 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: output/mask/R_50
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_FPN
 SOLVER:
   IMS_PER_BATCH: 8

@@ -8,13 +8,16 @@ MODEL:
   ROI_HEADS:
     NUM_CLASSES: 2
   ROI_KEYPOINT_HEAD:
+    NAME: "KRCNNConvHead"
     NUM_KEYPOINTS: 2
+    POOLER_RESOLUTION: (14, 14)
+    CONV_DIMS: (512, 512, 512, 512)
 DATASETS:
   TRAIN: ("stoma_train",)
   TEST: ("stoma_val",)
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: output/mask/R_50
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_middel_head_high_dim
 SOLVER:
-  IMS_PER_BATCH: 8
+  IMS_PER_BATCH: 12

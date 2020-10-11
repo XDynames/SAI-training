@@ -1,6 +1,6 @@
 python demo/demo.py \
-    --config-file configs/mask_rcnn_R_50_FPN.yaml \
-    --output output_demo_v1_all/ \
-    --input datasets/stoma/val/ \
+    --config-file configs/mask_rcnn_arabidopsis_cloud.yaml \
+    --output output_demo_arabidopsis/ \
+    --input datasets/stoma/val \
     --confidence-threshold 0.5 \
-    --opts MODEL.WEIGHTS output_v1/mask/R_50/model_final.pth
+    --opts MODEL.WEIGHTS ./arabidopsis_1.pth

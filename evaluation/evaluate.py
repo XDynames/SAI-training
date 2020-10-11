@@ -35,7 +35,7 @@ def load_gt_pred_pairs(directory):
             image_detections.append(image_data)
     return image_detections
 
-def associate_ids_to_pars(image_dicts):
+def associate_ids_to_pairs(image_dicts):
     stoma_properties = dict()
     for image_dict in image_dicts:
         detections = image_dict['detections']
@@ -106,7 +106,7 @@ if __name__=='__main__':
     # Load predictions and GT from .jsons
     gt_pred_dicts = load_gt_pred_pairs(args.directory)
     # Extract pairs into stomal id lists
-    stoma_id_pairs = associate_ids_to_pars(gt_pred_dicts)
+    stoma_id_pairs = associate_ids_to_pairs(gt_pred_dicts)
     # Extract individual property pairs
     width_pairs = extract_property(stoma_id_pairs, 'width')
     length_pairs = extract_property(stoma_id_pairs, 'length')

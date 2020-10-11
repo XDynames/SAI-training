@@ -19,12 +19,13 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_higherres
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_highest_low_res_cosine
 SOLVER:
-  IMS_PER_BATCH: 4
-  MAX_ITER: 150000
+  IMS_PER_BATCH: 2
+  MAX_ITER: 100000
+  LR_SCHEDULER_NAME: WarmupCosineLR
 INPUT:
-  MIN_SIZE_TRAIN: (1200, 2048)
+  MIN_SIZE_TRAIN: (320, 2048)
   MIN_SIZE_TEST: 0
-  MAX_SIZE_TRAIN: 2048
-  MAX_SIZE_TEST: 2048
+  MAX_SIZE_TRAIN: 3000
+  MAX_SIZE_TEST: 3000

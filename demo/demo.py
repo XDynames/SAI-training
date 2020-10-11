@@ -13,15 +13,21 @@ from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
 
 from predictor import VisualizationDemo
+from stoma.modeling import KRCNNConvHead
+from stoma.data.builtin import register_stoma
 from record import record_predictions, AnnotationStore
 
 # constants
 WINDOW_NAME = "Stoma detections"
-
+# Hack for open MP on MACOS
+os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
 def setup_cfg(args):
     # load config from file and command-line arguments
     cfg = get_cfg()
+    # a dirty fix for the keypoint resolution config
+    cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_RESOLUTION = (14, 14)
+
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
     # Set score_threshold for builtin models
@@ -30,6 +36,7 @@ def setup_cfg(args):
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = (
         args.confidence_threshold
     )
+    cfg.MODEL.DEVICE = 'cpu'
     cfg.freeze()
     return cfg
 
@@ -93,6 +100,7 @@ if __name__ == "__main__":
 
     if args.input:
         if os.path.isdir(args.input[0]):
+            register_stoma("datasets")
             args.input = [
                 os.path.join(args.input[0], fname)
                 for fname in os.listdir(args.input[0])
