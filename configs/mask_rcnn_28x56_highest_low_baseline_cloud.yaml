@@ -19,7 +19,12 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_baseline
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_28x56_highest_low_baseline
 SOLVER:
   IMS_PER_BATCH: 2
   MAX_ITER: 90000
+INPUT:
+  MIN_SIZE_TRAIN: (320, 3000)
+  MIN_SIZE_TEST: 0
+  MAX_SIZE_TRAIN: 3000
+  MAX_SIZE_TEST: 3000
