@@ -15,6 +15,7 @@ from detectron2.utils.events import get_event_storage
 
 from .poolers import ROIPooler
 
+_TOTAL_SKIPPED = 0
 
 def _keypoints_to_heatmap(
     keypoints: torch.Tensor, rois: torch.Tensor, heatmap_size: Sequence[int]
