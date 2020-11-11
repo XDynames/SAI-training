@@ -1,0 +1,33 @@
+_BASE_: "Base-RCNN-FPN.yaml"
+MODEL:
+  WEIGHTS: "detectron2://ImageNetPretrained/MSRA/R-50.pkl"
+  MASK_ON: True
+  KEYPOINT_ON: True
+  RESNETS:
+    DEPTH: 50
+  ROI_HEADS:
+    NAME: "KPROIHeads"
+    NUM_CLASSES: 2
+  ROI_KEYPOINT_HEAD:
+    NAME: "KRCNNConvHead"
+    NUM_KEYPOINTS: 2
+    POOLER_RESOLUTION: (56, 112)
+    CONV_DIMS: (256, 256, 256, 256, 256, 256, 256, 256)
+  ROI_MASK_HEAD:
+    POOLER_RESOLUTION: 56
+DATASETS:
+  TRAIN: ("stoma_train",)
+  TEST: ("stoma_val",)
+TEST:
+  EVAL_PERIOD: 5000
+  KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_final_increased_depth_8
+SOLVER:
+  WARMUP_ITERS: 5000
+  IMS_PER_BATCH: 2
+  MAX_ITER: 90000
+INPUT:
+  MIN_SIZE_TRAIN: (1200, 2048)
+  MIN_SIZE_TEST: 0
+  MAX_SIZE_TRAIN: 3000
+  MAX_SIZE_TEST: 3000
