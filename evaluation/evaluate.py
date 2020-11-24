@@ -124,7 +124,7 @@ if __name__=='__main__':
             legacy_all_pairs = [ x for y in legacy_open_closed_paris for x in y ]
             legacy_all_preds.append(legacy_all_pairs)
         print(legacy_all_preds)
-    
+
     # Display Plots
     plot_x_y_line([0,140], "Width Predictions")
     plot_scatter(width_pairs, "RCNN v2", '#2ca02c')
