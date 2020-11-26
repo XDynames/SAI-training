@@ -14,12 +14,12 @@ def get_arguments():
         required=True
     )
     parser.add_argument(
-        "--csv_output",
+        "--csv-output",
         help="Where to save .csv version of data",
         default=None
     )
     parser.add_argument(
-        "--legacy_csv",
+        "--legacy-csv",
         help="Predictions from legacy RCNN model",
         default=None
     )
