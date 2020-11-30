@@ -54,9 +54,9 @@ class TestCloudUtils(unittest.TestCase):
         file._close()
         self.assertRaises(ValueError, file.readline)
     def test_maybe_make_directory_doesnt_exist(self):
-        self.assertTrue(maybe_make_directory("./tmp/test/path/test.txt"))
+        self.assertTrue(self.gc_pathhandler.maybe_make_directory("./tmp/test/path/test.txt"))
     def test_maybe_make_directory_exists(self):
-        self.assertFalse(maybe_make_directory("./tmp/test/path/test.txt"))
+        self.assertFalse(self.gc_pathhandler.maybe_make_directory("./tmp/test/path/test.txt"))
     def test_add_gc_methods_to_text_file(self):
         file = open('/tmp/test.txt', 'w')
         self._add_gc_methods_to_file(file)
@@ -139,7 +139,7 @@ class TestCloudUtils(unittest.TestCase):
         self.assertEqual(read, 'Written to existing upload')
 
     def test_copy_from_local_file_exists(self):
-        maybe_make_directory('./tmp/')
+        self.gc_pathhandler.maybe_make_directory('./tmp/')
         remote_path = '/'.join([self.gc_default_path, 'path/uploaded.txt'])
         local_path = './tmp/test_upload.txt'
         with open(local_path, 'w') as file:

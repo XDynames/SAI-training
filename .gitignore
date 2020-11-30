@@ -11,6 +11,7 @@ inference_test_output
 *.diff
 *.csv
 *.profraw
+*.lock
 
 # compilation and distribution
 __pycache__

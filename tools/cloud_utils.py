@@ -3,14 +3,14 @@ import types
 from typing import *
 from typing import IO
 import io
-import threading
 
 from google.cloud import storage
+from filelock import FileLock
 from fvcore.common.file_io import PathHandler
 
-mutex = threading.Lock()
-
 class GoogleCloudHandler(PathHandler):
+    def __init__(self):
+        self._lock = FileLock('./mkdir.lock')
 
     def _get_supported_prefixes(self) -> List[str]:
         """
@@ -183,7 +183,7 @@ class GoogleCloudHandler(PathHandler):
     def _cache_remote_file(self, remote_path:str):
         local_path = get_local_cache_path(remote_path)
         local_directory = get_local_cache_directory(remote_path)
-        maybe_make_directory(local_directory)
+        self.maybe_make_directory(local_directory)
         gc_blob = self._get_blob(remote_path)
         self._cache_blob(local_path, gc_blob)
         
@@ -197,6 +197,15 @@ class GoogleCloudHandler(PathHandler):
     
     def _delete_remote_resource(self, path):
         self._get_blob(path).delete()
+
+    def maybe_make_directory(self, path:str) -> bool:
+        is_made = False
+
+        with self._lock:
+            if not os.path.exists(path):
+                os.makedirs(path)
+                is_made = True
+        return is_made
 
 
 def close_and_upload(self):
@@ -213,17 +222,6 @@ def decorate_file_with_gc_methods(
     setattr(file, '_gc_blob', gc_blob)
     setattr(file, '_close', file.close)
     file.close = types.MethodType(close_and_upload, file)
-
-def maybe_make_directory(path:str) -> bool:
-    is_made = False
-
-    mutex.acquire()
-    if not os.path.exists(path):
-        os.makedirs(path)
-        is_made = True
-    mutex.release()
-    
-    return is_made
 
 def extract_gc_namespace(path:str) -> str:
     return extract_gc_bucket_name(path).replace("-data", "")
