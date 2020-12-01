@@ -13,11 +13,11 @@ def get_arguments():
     )
     parser.add_argument(
         "--image-folder",
-        help="Path to firectory containing original images or images with prediction overlays"
+        help="Path to directory containing original images or images with prediction overlays"
     )
     parser.add_argument(
         "--output",
-        help="A directory to retrieved pores to",
+        help="A directory to save retrieved pores to",
     )
     parser.add_argument(
         "--annotations",
