@@ -17,11 +17,13 @@ from detectron2.structures import Boxes
 from detectron2.utils.env import TORCH_VERSION
 from detectron2.utils.logger import setup_logger
 
+from stoma.data import DatasetMapper, builtin
 from stoma.modeling import KRCNNConvHead
 
 
 def setup_cfg(args):
     cfg = get_cfg()
+    builtin.register_stoma(args.dataset_dir)
     # cuda context is initialized before creating dataloader, so we don't fork anymore
     cfg.DATALOADER.NUM_WORKERS = 0
     # a dirty fix for the keypoint resolution config
@@ -131,6 +133,7 @@ if __name__ == "__main__":
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument("--dataset-dir", default="datasets")
     args = parser.parse_args()
     logger = setup_logger()
     logger.info("Command line arguments: " + str(args))
