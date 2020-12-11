@@ -1,10 +1,12 @@
 import os
 import json
+import copy
 
 import torch
 import numpy as np
 from pycocotools import mask
 from pycocotools.coco import COCO
+import shapely
 from shapely import affinity
 import shapely.geometry as shapes
 import matplotlib.pyplot as plt
@@ -15,7 +17,6 @@ from mask_to_polygons.vectorification import geometries_from_mask
     Records predictions and ground truth pairs for an image as a JSON file
 '''
 
-counter = 1 # For Figure Printing
 
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
@@ -80,38 +81,64 @@ def record_predictions(predictions, filename, stoma_annotations):
     print(f"# of predictions: {len(predictions.pred_boxes)}")
     print(f"# of ground truth: {len(image_gt)}")
     remove_intersecting_predictions(predictions)
-    image_json = { 'detections' : assign_preds_gt(predictions, image_gt, coco) }
+    print(f"# of predictions: {len(predictions.pred_boxes)}")
+    image_gt = convert_gt_to_list_of_dictionaries(image_gt, coco)
+    predictions = convert_predictions_to_list_of_dictionaries(predictions)
+    pairs = assign_preds_gt(predictions, image_gt)
+    image_json = { 'detections' : pairs }
     print(f"Matched: {len(image_json['detections'])}")
 
     with open('.'.join([filename[:-4], 'json']), 'w') as file:
         json.dump(image_json, file)
+    with open('.'.join([filename[:-4]+'-predictions', 'json']), 'w') as file:
+        json.dump({'detections' : predictions}, file)
+    with open('.'.join([filename[:-4]+'-gt', 'json']), 'w') as file:
+        json.dump({'detections' : image_gt}, file)
 
 def remove_intersecting_predictions(predictions):
+    final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
-        for j, bbox_j in enumerate(predictions.pred_boxes):
-            if i == j: continue
-            if intersects(bbox_i, bbox_j):
-                bboxes = predictions.pred_boxes.tensor 
-                if predictions.scores[i] >= predictions.scores[j]:
-                    predictions.pred_boxes.tensor = torch.cat([bboxes[0:j], bboxes[j+1:]])
-                else:
-                    predictions.pred_boxes.tensor = torch.cat([bboxes[0:i], bboxes[i+1:]])
+        intersecting = [
+            j for j, bbox_j in enumerate(predictions.pred_boxes)
+            if not i == j and intersects(bbox_i, bbox_j)
+        ]
+        is_larger = [
+            predictions.scores[i].item() >= predictions.scores[j].item()
+            for j in intersecting
+        ]  
+        if all(is_larger) or not intersecting:
+            final_indices.append(i)
+    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
 
-def assign_preds_gt(predictions, image_gt, coco):
-    image_detections = []
-    for i, bbox in enumerate(predictions.pred_boxes):
-        for instance_gt in image_gt:
-            if gt_intersects(bbox, instance_gt['bbox']):
-                gt_pred_pair = create_pair(i, predictions, instance_gt, coco)
-                image_detections.append(gt_pred_pair)
-    return image_detections
+def assign_preds_gt(predictions, image_gt):
+    for i, prediction in enumerate(predictions):
+        bbox = prediction['bbox']
+        gt_prediction_pairs = [
+            create_pair(predictions[i], instance_gt)
+            for instance_gt in image_gt
+            if gt_intersects(bbox, instance_gt['bbox'])
+        ]
+    return gt_prediction_pairs
 
-def create_pair(i, predictions, instance_gt, coco):
+def convert_gt_to_list_of_dictionaries(image_gt, coco):
+    image_gt = [
+        convert_gt_to_dictionary(instance_gt, coco)   
+        for instance_gt in image_gt
+    ]
+    return image_gt
+
+def convert_predictions_to_list_of_dictionaries(predictions):
+    predictions = [
+        convert_predictions_to_dictionary(i, predictions)
+        for i in range(len(predictions.pred_boxes))
+    ]
+    return predictions
+
+def convert_predictions_to_dictionary(i, predictions):
     # Extract and format predictions
     pred_mask = predictions.pred_masks[i].cpu().numpy()
     pred_AB = predictions.pred_keypoints[i].flatten().tolist()
     pred_class = predictions.pred_classes[i].item()
-
     if  pred_class == 1:
         # Processes prediction mask
         pred_polygon = mask_to_poly(pred_mask)
@@ -123,7 +150,21 @@ def create_pair(i, predictions, instance_gt, coco):
         pred_CD = [-1, -1, 1. -1, -1, 1]
         pred_width = 0
         pred_area = 0
+    
+    prediction_dict = { 
+        'bbox' : predictions.pred_boxes[i].tensor.tolist()[0],
+        'area' : pred_area,
+        'AB_keypoints' : pred_AB,
+        'length' : l2_dist(pred_AB),
+        'CD_keypoints' : pred_CD,
+        'width' : pred_width,
+        'category_id' : pred_class,
+        'segmentation' : [pred_polygon],
+        'confidence' : predictions.scores[i].item()
+    }
+    return prediction_dict
 
+def convert_gt_to_dictionary(instance_gt, coco):
     if instance_gt['category_id'] == 1:
         # Process ground truth mask
         gt_CD = find_CD(instance_gt['segmentation'][0], instance_gt['keypoints'])
@@ -134,37 +175,20 @@ def create_pair(i, predictions, instance_gt, coco):
         gt_width = 0
         gt_CD = [-1, -1, 1, -1, -1, 1]
         instance_gt['area'] = 0
-    
-    # For visual check
-    if not instance_gt['category_id'] == pred_class:
-        global counter
-        counter+=1
-
-    pred = { 
-        'bbox' : predictions.pred_boxes[i].tensor.tolist()[0],
-        'area' : pred_area,
-        'AB_keypoints' : pred_AB,
-        'length' : l2_dist(pred_AB),
-        'CD_keypoints' : pred_CD,
-        'width' : pred_width,
-        'class' : pred_class,
-        'segmentation' : [pred_polygon],
-        'confidence' : predictions.scores[i].item()
-    }
-    
-    # Add additional keys to ground truth
+     # Add additional keys to ground truth
     instance_gt['width'] = gt_width
-    instance_gt['CD_keypoinys'] = gt_CD
+    instance_gt['CD_keypoints'] = gt_CD
     instance_gt['length'] = l2_dist(instance_gt['keypoints'])
+    return instance_gt
 
+def create_pair(predictions, instance_gt):
     detection_pair = {
         'gt' : instance_gt,
-        'pred' : pred
+        'pred' : predictions
     }
     return detection_pair
 
 def find_CD(polygon, keypoints=None, gt=True):
-    global counter
     # If no mask is predicted
     if len(polygon) < 1: 
     #    counter += 1
@@ -182,9 +206,13 @@ def find_CD(polygon, keypoints=None, gt=True):
 
     l_AB = shapes.LineString([A, B])
     l_perp = affinity.rotate(l_AB, 90)
-    l_perp = affinity.scale(l_perp, 2, 2)
+    l_perp = affinity.scale(l_perp, 10, 10)
     # Find intersection with polygon
-    intersections = l_perp.intersection(mask)
+    try:
+        intersections = l_perp.intersection(mask)
+    except:
+        intersections = shapes.collection.GeometryCollection()
+
     '''
     # Visual check
     plt.plot(*mask.xy)

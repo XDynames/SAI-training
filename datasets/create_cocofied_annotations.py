@@ -6,6 +6,7 @@ import shutil
 
 import xmltodict
 from PIL import Image
+from tqdm import tqdm
 
 from detectron2.utils.logger import setup_logger
 
@@ -28,7 +29,7 @@ barley_human_trail_images = [
 ]
 
 arabidopsis_human_trail_images = [
-    'B-t-1-1.jpg', 'B-t-1-5.xml', 'B-t-2-3.xml',
+    'B-t-1-1.xml', 'B-t-1-5.xml', 'B-t-2-3.xml',
     'C-W-1-3.xml', 'C-W-2-2.xml', 'C-g-1-1.xml',
     'C-g-1-5.xml', 'C-g-2-2.xml', 'C-t-1-2.xml',
     'C-t-2-1.xml', 'B-t-1-3.xml', 'B-t-2-1.xml',
@@ -292,9 +293,10 @@ if __name__ == "__main__":
         )
     )
 
+    logger.info("Converting image files to png:")
     # Convert jpgs to pngs
     image_list = os.listdir(args.img_dir)
-    for file in image_list:
+    for file in tqdm(image_list):
         image_path = os.path.join(args.img_dir, file)
         new_image_path = ".".join([image_path[:-4], "png"])
         if file[-4:] == ".jpg" and not os.path.exists(new_image_path):
