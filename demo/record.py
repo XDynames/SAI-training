@@ -111,13 +111,14 @@ def remove_intersecting_predictions(predictions):
     predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
 
 def assign_preds_gt(predictions, image_gt):
+    gt_prediction_pairs = []
     for i, prediction in enumerate(predictions):
         bbox = prediction['bbox']
-        gt_prediction_pairs = [
+        gt_prediction_pairs.extend([
             create_pair(predictions[i], instance_gt)
             for instance_gt in image_gt
             if gt_intersects(bbox, instance_gt['bbox'])
-        ]
+        ])
     return gt_prediction_pairs
 
 def convert_gt_to_list_of_dictionaries(image_gt, coco):
