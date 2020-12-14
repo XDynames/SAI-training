@@ -11,7 +11,7 @@ MODEL:
   ROI_KEYPOINT_HEAD:
     NAME: "KRCNNConvHead"
     NUM_KEYPOINTS: 2
-    POOLER_RESOLUTION: (56, 56)
+    POOLER_RESOLUTION: (56, 112)
     CONV_DIMS: (256, 256, 256, 256, 256, 256, 256, 256)
   ROI_MASK_HEAD:
     POOLER_RESOLUTION: 56
@@ -21,13 +21,13 @@ DATASETS:
 TEST:
   EVAL_PERIOD: 5000
   KEYPOINT_OKS_SIGMAS: [0.02, 0.02]
-OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_arabidopsis_final_v4/
+OUTPUT_DIR: gs://aiml-sscv-data/stomata/output/mask/R_50_arabidopsis_final_v4_high_low/
 SOLVER:
   WARMUP_ITERS: 5000
   IMS_PER_BATCH: 2
   MAX_ITER: 90000
 INPUT:
-  MIN_SIZE_TRAIN: (1200, 2048)
+  MIN_SIZE_TRAIN: (320, 1944)
   MIN_SIZE_TEST: 0
   MAX_SIZE_TRAIN: 3000
   MAX_SIZE_TEST: 3000
