@@ -80,16 +80,33 @@ def poly2seg(polygon):
     # convert xml polygon to segmentation
     segmentation = coords2array(polygon)
     xs = segmentation[::2]
+    ys = segmentation[1::2]
     xmin = min(range(len(xs)), key=xs.__getitem__)
     xmax = max(range(len(xs)), key=xs.__getitem__)
-    keypoints = [
-        segmentation[xmin * 2],
-        segmentation[xmin * 2 + 1],
-        1,
-        segmentation[xmax * 2],
-        segmentation[xmax * 2 + 1],
-        1,
-    ]
+    ymin = min(range(len(ys)), key=ys.__getitem__)
+    ymax = max(range(len(ys)), key=ys.__getitem__)
+    y_extent = ys[ymax] - ys[ymin]
+    x_extent = xs[xmax] - xs[xmin]
+
+    if x_extent > y_extent:
+        keypoints = [
+            segmentation[xmin * 2],
+            segmentation[xmin * 2 + 1],
+            1,
+            segmentation[xmax * 2],
+            segmentation[xmax * 2 + 1],
+            1,
+        ]
+    else:
+        keypoints = [
+            segmentation[ymin * 2],
+            segmentation[ymin * 2 + 1],
+            1,
+            segmentation[ymax * 2],
+            segmentation[ymax * 2 + 1],
+            1,
+        ]
+
     return keypoints, segmentation
 
 
