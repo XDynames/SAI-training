@@ -194,11 +194,13 @@ def find_CD(polygon, keypoints=None, gt=True):
     if len(polygon) < 1: 
     #    counter += 1
         return [-1,-1,1,-1,-1,1]
+
+    x_points = [ x for x in polygon[0::2] ]
+    y_points = [ y for y in polygon[1::2] ]
+
     if keypoints == None:
-        keypoints = extract_polygon_AB(polygon)
+        keypoints = extract_polygon_AB(x_points, y_points)
     # Convert to shapely linear ring
-    x_points = [ polygon[i] for i in range(0, len(polygon), 2) ]
-    y_points = [ polygon[i] for i in range(1, len(polygon), 2) ]
     polygon = [ [x, y] for x, y in zip(x_points, y_points) ]
     mask = shapes.LinearRing(polygon)
     # Find line perpendicular to AB
@@ -276,29 +278,41 @@ def gt_intersects(bbox, gt_bbox):
     ]
     return intersects(bbox, gt_bbox)
 
-def list_argmax(l): return max(range(len(l)), key=lambda i: l[i])
-def list_argmin(l): return min(range(len(l)), key=lambda i: l[i])
-
-def extract_polygon_AB(polygon):
-    x_values = [ x for x in polygon[0::2] ]
-    y_values = [ y for y in polygon[1::2] ]
-
-    i_min_x, i_max_x = list_argmin(x_values), list_argmax(x_values)
-    x_min, x_max = x_values[i_min_x], x_values[i_max_x]
+def extract_polygon_AB(x_values, y_values):
+    x_min, x_max = min(x_values), max(x_values)
+    y_min, y_max = min(y_values), max(y_values)
+    x_extent = x_max - x_min
+    y_extent = y_max - y_min
+    # Enables pores of arbitary orientation
+    if x_extent > y_extent:
+        major_axis_values = x_values
+        minor_axis_values = y_values
+        maximum_major_value = x_max
+        minimum_major_value = x_min
+    else:
+        major_axis_values = y_values
+        minor_axis_values = x_values
+        maximum_major_value = y_max
+        minimum_major_value = y_min
+    # Left/Right along major axis
+    left_hand_values, right_hand_values = [], []
+    for i, minor_value in enumerate(minor_axis_values):
+        if maximum_major_value == major_axis_values[i]:
+            right_hand_values.append(minor_value)
+        if minimum_major_value == major_axis_values[i]:
+            left_hand_values.append(minor_value)
+    # Use midpoint of extreme values as keypoint value
+    right_hand_value = (right_hand_values[0] + right_hand_values[-1]) / 2
+    left_hand_value = (left_hand_values[0] + left_hand_values[-1]) / 2
     
-    left_hand_y_values, right_hand_y_values = [], []
-    for i, y in enumerate(y_values):
-        if x_max == x_values[i]:
-            right_hand_y_values.append(y)
-        if x_min == x_values[i]:
-            left_hand_y_values.append(y)
-
-    # Use midpoint of extreme y values as keypoint value
-    right_hand_y = (right_hand_y_values[0] + right_hand_y_values[-1]) / 2
-    left_hand_y = (left_hand_y_values[0] + left_hand_y_values[-1]) / 2
-
-    keypoints = [
-        x_min, left_hand_y, 1,
-        x_max, right_hand_y, 1
-    ]
+    if x_extent > y_extent:
+        keypoints = [
+            minimum_major_value, left_hand_value, 1,
+            maximum_major_value, right_hand_value, 1
+        ]
+    else:
+        keypoints = [
+            left_hand_value, minimum_major_value, 1,
+            right_hand_value, maximum_major_value, 1
+        ]
     return keypoints
