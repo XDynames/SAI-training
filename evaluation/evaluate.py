@@ -45,7 +45,7 @@ def associate_ids_to_pairs(image_dicts):
                 'width' : { 'gt' : gt['width'], 'pred' : pred['width'] },
                 'length' : { 'gt' : gt['length'], 'pred' : pred['length'] },
                 'area' : { 'gt' : gt['area'], 'pred' : pred['area'] },
-                'class' : { 'gt' : gt['category_id'], 'pred' : pred['class'] },
+                'class' : { 'gt' : gt['category_id'], 'pred' : pred['category_id'] },
                 'confidence' : pred['confidence'],
             }
             stoma_properties[gt['id']] = property_pairs

@@ -17,6 +17,7 @@ from mask_to_polygons.vectorification import geometries_from_mask
     Records predictions and ground truth pairs for an image as a JSON file
 '''
 
+IOU_THRESHOLD = 0.5
 
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
@@ -100,7 +101,7 @@ def remove_intersecting_predictions(predictions):
     for i, bbox_i in enumerate(predictions.pred_boxes):
         intersecting = [
             j for j, bbox_j in enumerate(predictions.pred_boxes)
-            if not i == j and intersects(bbox_i, bbox_j)
+            if not i == j and is_overlapping(bbox_i, bbox_j)
         ]
         is_larger = [
             predictions.scores[i].item() >= predictions.scores[j].item()
@@ -117,7 +118,7 @@ def assign_preds_gt(predictions, image_gt):
         gt_prediction_pairs.extend([
             create_pair(predictions[i], instance_gt)
             for instance_gt in image_gt
-            if gt_intersects(bbox, instance_gt['bbox'])
+            if gt_overlaps(bbox, instance_gt['bbox'])
         ])
     return gt_prediction_pairs
 
@@ -269,14 +270,36 @@ def intersects(bbox_1, bbox_2):
     )
     return is_overlap
 
-def gt_intersects(bbox, gt_bbox):
+def is_overlapping(bbox1, bbox2):
+    if intersects(bbox1, bbox2):
+        return overlaps(bbox1, bbox2)
+    return False
+
+def overlaps(bbox_1, bbox_2):
+    iou = intersection_over_union(bbox_1, bbox_2)
+    if iou > IOU_THRESHOLD:
+        return True
+    return False
+
+def gt_overlaps(bbox, gt_bbox):
     # GT boxes [x, y, width, height] -> [x1, y1, x2, y2]
     gt_bbox = [
         gt_bbox[0], gt_bbox[1],
         gt_bbox[0] + gt_bbox[2],
         gt_bbox[1] + gt_bbox[3]
     ]
-    return intersects(bbox, gt_bbox)
+
+    return is_overlapping(bbox, gt_bbox)
+    
+def intersection_over_union(bbox, gt_bbox):
+    x_max, y_max = max(bbox[0], gt_bbox[0]), max(bbox[1], gt_bbox[1])
+    x_min, y_min = min(bbox[2], gt_bbox[2]), min(bbox[3], gt_bbox[3])
+    intersecting_area = max(0, x_min - x_max + 1) * max(0, y_min - y_max + 1)
+
+    pred_area = (bbox[2] - bbox[0] + 1) * (bbox[3] - bbox[1] + 1)
+    gt_area = (gt_bbox[2] - gt_bbox[0] + 1) * (gt_bbox[3] - gt_bbox[1] + 1)
+    iou = intersecting_area / float(pred_area + gt_area - intersecting_area)
+    return iou
 
 def extract_polygon_AB(x_values, y_values):
     x_min, x_max = min(x_values), max(x_values)
