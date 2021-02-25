@@ -66,7 +66,7 @@ def get_parser():
     )
     parser.add_argument(
         "--annotations",
-        default="datasets/stoma/annotations/val.json",
+        default=None,
         help="Path to file containing image ground truth annotations"
     )
     parser.add_argument(
@@ -75,6 +75,7 @@ def get_parser():
         default=0.5,
         help="Minimum score for instance predictions to be shown",
     )
+
     parser.add_argument(
         "--opts",
         help="Modify config options using the command-line 'KEY VALUE' pairs",
@@ -96,7 +97,10 @@ if __name__ == "__main__":
     demo = VisualizationDemo(cfg)
 
     # Stores annotation information
-    stoma_annotations = AnnotationStore(args.annotations)
+    if not args.annotations is None:
+        stoma_annotations = AnnotationStore(args.annotations)
+    else:
+        stoma_annotations = None
 
     if args.input:
         if os.path.isdir(args.input[0]):

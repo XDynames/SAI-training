@@ -72,27 +72,30 @@ class AnnotationStore:
         return [filename, pore_annotation]
 
 def record_predictions(predictions, filename, stoma_annotations):
+    if stoma_annotations is None:
+        remove_intersecting_predictions(predictions)
+        print(f"# of predictions: {len(predictions.pred_boxes)}")
+        predictions = convert_predictions_to_list_of_dictionaries(predictions)
+        with open('.'.join([filename[:-4]+'-predictions', 'json']), 'w') as file:
+            json.dump({'detections' : predictions}, file)
+        return
+        
     ground_truth = stoma_annotations.ground_truth
     filename_id_map = stoma_annotations.filename_id_map
+
     coco = stoma_annotations.coco
 
     image_name = filename.split('/')[-1]
     image_gt = ground_truth[filename_id_map[image_name]]['annotations']
 
-    print(f"# of predictions: {len(predictions.pred_boxes)}")
     print(f"# of ground truth: {len(image_gt)}")
-    remove_intersecting_predictions(predictions)
-    print(f"# of predictions: {len(predictions.pred_boxes)}")
     image_gt = convert_gt_to_list_of_dictionaries(image_gt, coco)
-    predictions = convert_predictions_to_list_of_dictionaries(predictions)
     pairs = assign_preds_gt(predictions, image_gt)
     image_json = { 'detections' : pairs }
     print(f"Matched: {len(image_json['detections'])}")
 
     with open('.'.join([filename[:-4], 'json']), 'w') as file:
         json.dump(image_json, file)
-    with open('.'.join([filename[:-4]+'-predictions', 'json']), 'w') as file:
-        json.dump({'detections' : predictions}, file)
     with open('.'.join([filename[:-4]+'-gt', 'json']), 'w') as file:
         json.dump({'detections' : image_gt}, file)
 

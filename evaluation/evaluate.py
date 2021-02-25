@@ -23,6 +23,11 @@ def get_arguments():
         help="Predictions from legacy RCNN model",
         default=None
     )
+    parser.add_argument(
+        "--plot",
+        help="Plot results",
+        action='store_true'
+    )
     return parser.parse_args()
 
 def load_gt_pred_pairs(directory):
@@ -32,54 +37,85 @@ def load_gt_pred_pairs(directory):
         if not file[-4:] == 'json': continue 
         with open(os.path.join(directory,file), "r") as read_file:
             image_data = json.load(read_file)
+            image_data['image_name'] = file[:-4].split('-')[0]
             image_detections.append(image_data)
     return image_detections
 
 def associate_ids_to_pairs(image_dicts):
     stoma_properties = dict()
+    counter = 0
     for image_dict in image_dicts:
+        image_name = image_dict['image_name']
         detections = image_dict['detections']
         for detection in detections:
-            gt, pred = detection['gt'], detection['pred']
+            d_width, d_length, d_area, d_class, d_conf = {}, {}, {}, {}, {}
+            if 'gt' in detection:
+                gt = detection['gt']
+                pred = detection['pred']
+                d_width['gt'] = gt['width']
+                d_length['gt'] = gt['length']
+                d_area['gt'] = gt['area']
+                d_class['gt'] = gt['category_id']
+            else:
+                pred = detection
+            d_width['pred'] = pred['width']
+            d_length['pred'] = pred['length']
+            d_area['pred'] = pred['area']
+            d_class['pred'] = pred['category_id']
+            d_conf['pred'] = pred['confidence']
+            d_image_name = {'pred': image_name}
+
             property_pairs = {
-                'width' : { 'gt' : gt['width'], 'pred' : pred['width'] },
-                'length' : { 'gt' : gt['length'], 'pred' : pred['length'] },
-                'area' : { 'gt' : gt['area'], 'pred' : pred['area'] },
-                'class' : { 'gt' : gt['category_id'], 'pred' : pred['category_id'] },
-                'confidence' : pred['confidence'],
+                'width' : d_width,
+                'length' : d_length,
+                'area' : d_area,
+                'class' : d_class,
+                'confidence' : d_conf,
+                'image_name' : d_image_name,
             }
-            stoma_properties[gt['id']] = property_pairs
+            if 'gt' in detection:
+                stoma_properties[gt['id']] = property_pairs
+            else:
+                stoma_properties[counter] = property_pairs
+                counter += 1
     return stoma_properties
 
 def extract_property(stoma_id_dict, key):
     property_pairs = []
     for stoma_id in stoma_id_dict.keys():
         property_pair = stoma_id_dict[stoma_id]
-        gt_value = property_pair[key]['gt']
         pred_value = property_pair[key]['pred']
-        property_pairs.append([gt_value, pred_value])
+        if 'gt' in property_pair[key]:
+            gt_value = property_pair[key]['gt']
+            property_pairs.append([gt_value, pred_value])
+        else:
+            property_pairs.append([pred_value])
     return property_pairs
 
-def write_to_csv(stoma_id_dict, filepath): 
-    column_names = [
-        'id','class','pred_class','length','pred_length',
-        'width','pred_width','area','pred_area','confidence'
-    ]
+def write_to_csv(stoma_id_dict, filepath):
+    if 'gt' in stoma_id_dict[list(stoma_id_dict.keys())[0]]['class']:
+        column_names = [
+            'id', 'image_name', 'class','pred_class','length',
+            'pred_length', 'width','pred_width','area',
+            'pred_area','confidence',
+        ]
+    else:
+        column_names = [
+            'id', 'image_name', 'pred_class','pred_length',
+            'pred_width','pred_area','confidence'
+        ]
+ 
     colums_keys = [
-        'class', 'length', 'width', 'area', 'confidence'
+        'image_name', 'class', 'length', 'width', 'area', 'confidence'
     ]
     csv = ','.join(column_names) + '\n'
     for key in stoma_id_dict.keys():
         values = [key]
         detection = stoma_id_dict[key]
         for stoma_property in colums_keys:
-            if stoma_property == 'confidence':
-                values.append(detection[stoma_property])
-            else:
-                values.extend([
-                    detection[stoma_property]['gt'],
-                    detection[stoma_property]['pred']
-                ])
+            values.append(detection[stoma_property]['pred'])
+            if detection[stoma_property] is dict:
+                values.append(detection[stoma_property]['gt'])
         values = [ str(x) for x in values ]
         csv += ','.join(values) + '\n'
 
@@ -113,9 +149,9 @@ if __name__=='__main__':
     class_pairs = extract_property(stoma_id_pairs, 'class')
     area_pairs = extract_property(stoma_id_pairs, 'area')
     # Covert to csv formatted file
-    if not args.csv_output == None:
+    if not args.csv_output is None:
         write_to_csv(stoma_id_pairs, args.csv_output)
-    if not args.legacy_csv == None:
+    if not args.legacy_csv is None:
         files = os.listdir(args.legacy_csv)
         legacy_all_preds = []
         for file in files:
@@ -126,19 +162,20 @@ if __name__=='__main__':
         print(legacy_all_preds)
 
     # Display Plots
-    plot_x_y_line([0,140], "Width Predictions")
-    plot_scatter(width_pairs, "RCNN v2", '#2ca02c')
-    if not args.legacy_csv == None:
-        plot_scatter(legacy_all_preds[2], "Legacy RCNN", '#ff7f0e')
-    plt.show()
-    plot_x_y_line([160,400], "Length Predictions")
-    plot_scatter(length_pairs, "RCNN v2", '#2ca02c')
-    if not args.legacy_csv == None:
-        plot_scatter(legacy_all_preds[1], "Legacy RCNN", '#ff7f0e')
-    plt.show()
-    plot_x_y_line([0,17000], "Area Predictions")
-    plot_scatter(area_pairs, "RCNN v2", '#2ca02c')
-    if not args.legacy_csv == None:
-        plot_scatter(legacy_all_preds[0], "Legacy RCNN", '#ff7f0e')
-    plt.show()
+    if args.plot:
+        plot_x_y_line([0,140], "Width Predictions")
+        plot_scatter(width_pairs, "RCNN v2", '#2ca02c')
+        if not args.legacy_csv is None:
+            plot_scatter(legacy_all_preds[2], "Legacy RCNN", '#ff7f0e')
+        plt.show()
+        plot_x_y_line([160,400], "Length Predictions")
+        plot_scatter(length_pairs, "RCNN v2", '#2ca02c')
+        if not args.legacy_csv is None:
+            plot_scatter(legacy_all_preds[1], "Legacy RCNN", '#ff7f0e')
+        plt.show()
+        plot_x_y_line([0,17000], "Area Predictions")
+        plot_scatter(area_pairs, "RCNN v2", '#2ca02c')
+        if not args.legacy_csv is None:
+            plot_scatter(legacy_all_preds[0], "Legacy RCNN", '#ff7f0e')
+        plt.show()
 
