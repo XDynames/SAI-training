@@ -2,9 +2,9 @@ import unittest
 import inspect
 import shutil
 
-from cloud_utils import *
+from cloud_ros_utils import *
 
-class TestCloudUtils(unittest.TestCase):
+class TestCloudros_utils(unittest.TestCase):
 
     @classmethod
     def setUpClass(self):
