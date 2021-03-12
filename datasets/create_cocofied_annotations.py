@@ -71,7 +71,11 @@ def get_parser():
     )
     parser.add_argument(
         "--arabidopsis", action='store_true',
-        help="Whether we are creating the arabidopsis dataset"
+        help="Create the arabidopsis dataset"
+    )
+    parser.add_argument(
+        "--combined", action='store_true',
+        help="Create a dataset that combines barley and arabidopsis samples"
     )
     return parser
 
@@ -286,6 +290,9 @@ if __name__ == "__main__":
 
     anno_list = os.listdir(args.anno_dir)
     if args.arabidopsis:
+        human_trail_images = arabidopsis_human_trail_images
+    elif args.combined:
+        arabidopsis_human_trail_images.extend(barley_human_trail_images)
         human_trail_images = arabidopsis_human_trail_images
     else:
         human_trail_images = barley_human_trail_images

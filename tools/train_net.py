@@ -22,7 +22,7 @@ from collections import OrderedDict
 
 import torch
 
-import detectron2.utils.comm as comm
+import detectron2.ros_utils.comm as comm
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog, build_detection_train_loader
@@ -35,7 +35,7 @@ from fvcore.common.file_io import PathManager
 
 from stoma.data import DatasetMapper, builtin
 from stoma.modeling import KRCNNConvHead
-from tools.cloud_utils import GoogleCloudHandler
+from tools.cloud_ros_utils import GoogleCloudHandler
 
 # Add to fvcore's global pathmanger
 PathManager.register_handler(GoogleCloudHandler())
