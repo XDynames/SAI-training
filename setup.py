@@ -83,7 +83,7 @@ setup(
         "mask-to-polygons",
         "tqdm>4.29.0",
         "tensorboard",
-        "shapely",
+        "shapely==1.6.4",
         "xmltodict",
         "iopath==0.1.6",
     ],
