@@ -4,13 +4,14 @@ import torch
 
 from detectron2.layers import ROIAlign, ROIAlignRotated, cat, nonzero_tuple
 from detectron2.modeling.poolers import ROIPooler as D2ROIPooler
-from detectron2.modeling.poolers import (assign_boxes_to_levels,
-                                         convert_boxes_to_pooler_format)
+from detectron2.modeling.poolers import (
+    assign_boxes_to_levels,
+    convert_boxes_to_pooler_format,
+)
 
 
 class ROIPooler(D2ROIPooler):
-    """ Same as detectron2's ROIPooler but support non-square output size
-    """
+    """Same as detectron2's ROIPooler but support non-square output size"""
 
     def forward(self, x: List[torch.Tensor], box_lists):
         """

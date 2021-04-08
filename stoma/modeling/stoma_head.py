@@ -6,10 +6,13 @@ from torch.nn import functional as F
 from detectron2.config import configurable
 from detectron2.layers import Conv2d, ShapeSpec, cat, interpolate
 from detectron2.structures import Instances
-from detectron2.modeling import (ROI_HEADS_REGISTRY,
-                                 ROI_KEYPOINT_HEAD_REGISTRY,
-                                 BaseKeypointRCNNHead, StandardROIHeads,
-                                 build_keypoint_head)
+from detectron2.modeling import (
+    ROI_HEADS_REGISTRY,
+    ROI_KEYPOINT_HEAD_REGISTRY,
+    BaseKeypointRCNNHead,
+    StandardROIHeads,
+    build_keypoint_head,
+)
 from detectron2.modeling.roi_heads.keypoint_head import keypoint_rcnn_inference
 from detectron2.utils.events import get_event_storage
 
@@ -17,11 +20,11 @@ from .poolers import ROIPooler
 
 _TOTAL_SKIPPED = 0
 
+
 def _keypoints_to_heatmap(
     keypoints: torch.Tensor, rois: torch.Tensor, heatmap_size: Sequence[int]
 ) -> Tuple[torch.Tensor, torch.Tensor]:
-    """ Support non-square heatmap
-    """
+    """Support non-square heatmap"""
 
     if rois.numel() == 0:
         return rois.new().long(), rois.new().long()
@@ -84,7 +87,9 @@ def keypoint_rcnn_loss(pred_keypoint_logits, instances, normalizer):
             continue
         keypoints = instances_per_image.gt_keypoints
         heatmaps_per_image, valid_per_image = _keypoints_to_heatmap(
-            keypoints.tensor, instances_per_image.proposal_boxes.tensor, keypoint_side_len
+            keypoints.tensor,
+            instances_per_image.proposal_boxes.tensor,
+            keypoint_side_len,
         )
         heatmaps.append(heatmaps_per_image.view(-1))
         valid.append(valid_per_image.view(-1))
@@ -100,7 +105,9 @@ def keypoint_rcnn_loss(pred_keypoint_logits, instances, normalizer):
         global _TOTAL_SKIPPED
         _TOTAL_SKIPPED += 1
         storage = get_event_storage()
-        storage.put_scalar("kpts_num_skipped_batches", _TOTAL_SKIPPED, smoothing_hint=False)
+        storage.put_scalar(
+            "kpts_num_skipped_batches", _TOTAL_SKIPPED, smoothing_hint=False
+        )
         return pred_keypoint_logits.sum() * 0
 
     N, K, H, W = pred_keypoint_logits.shape
@@ -120,19 +127,18 @@ def keypoint_rcnn_loss(pred_keypoint_logits, instances, normalizer):
 
 @ROI_HEADS_REGISTRY.register()
 class KPROIHeads(StandardROIHeads):
-    """ Same as StandardROIHeads but use local ROIPooler which supports non-square output size.
-    """
+    """Same as StandardROIHeads but use local ROIPooler which supports non-square output size."""
 
     @classmethod
     def _init_keypoint_head(cls, cfg, input_shape):
         if not cfg.MODEL.KEYPOINT_ON:
             return {}
 
-        in_features       = cfg.MODEL.ROI_HEADS.IN_FEATURES
+        in_features = cfg.MODEL.ROI_HEADS.IN_FEATURES
         pooler_resolution = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_RESOLUTION
-        pooler_scales     = tuple(1.0 / input_shape[k].stride for k in in_features)
-        sampling_ratio    = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_SAMPLING_RATIO
-        pooler_type       = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_TYPE
+        pooler_scales = tuple(1.0 / input_shape[k].stride for k in in_features)
+        sampling_ratio = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_SAMPLING_RATIO
+        pooler_type = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_TYPE
 
         in_channels = [input_shape[f].channels for f in in_features][0]
 
@@ -189,7 +195,7 @@ class KRCNNConvHead(BaseKeypointRCNNHead):
                 # Caffe2 implementation uses MSRAFill, which in fact
                 # corresponds to kaiming_normal_ in PyTorch
                 nn.init.kaiming_normal_(param, mode="fan_out", nonlinearity="relu")
-        
+
         nn.init.normal_(self.score_lowres.weight, mean=0.0, std=0.0001)
 
     @classmethod
@@ -209,13 +215,14 @@ class KRCNNConvHead(BaseKeypointRCNNHead):
         return x
 
     def forward(self, x, instances: List[Instances]):
-        """ Use local keypoint_rcnn_loss
-        """
+        """Use local keypoint_rcnn_loss"""
         x = self.layers(x)
         if self.training:
             num_images = len(instances)
             normalizer = (
-                None if self.loss_normalizer == "visible" else num_images * self.loss_normalizer
+                None
+                if self.loss_normalizer == "visible"
+                else num_images * self.loss_normalizer
             )
             return {
                 "loss_keypoint": keypoint_rcnn_loss(x, instances, normalizer=normalizer)

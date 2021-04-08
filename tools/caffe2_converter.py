@@ -11,7 +11,10 @@ from detectron2.config import get_cfg
 from detectron2.data import build_detection_test_loader
 from detectron2.evaluation import COCOEvaluator, inference_on_dataset, print_csv_format
 from detectron2.export import Caffe2Tracer, add_export_config
-from detectron2.export.torchscript import dump_torchscript_IR, export_torchscript_with_instances
+from detectron2.export.torchscript import (
+    dump_torchscript_IR,
+    export_torchscript_with_instances,
+)
 from detectron2.modeling import GeneralizedRCNN, build_model
 from detectron2.structures import Boxes
 from detectron2.utils.env import TORCH_VERSION
@@ -31,7 +34,7 @@ def setup_cfg(args):
     cfg = add_export_config(cfg)
     cfg.merge_from_file(args.config_file)
     cfg.merge_from_list(args.opts)
-    cfg.MODEL.DEVICE = 'cpu'
+    cfg.MODEL.DEVICE = "cpu"
     cfg.freeze()
     return cfg
 
@@ -112,7 +115,9 @@ def export_tracing(torch_model, inputs):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Convert a model using caffe2 tracing.")
+    parser = argparse.ArgumentParser(
+        description="Convert a model using caffe2 tracing."
+    )
     parser.add_argument(
         "--format",
         choices=["caffe2", "onnx", "torchscript"],
@@ -125,7 +130,9 @@ if __name__ == "__main__":
         help="Method to export models",
         default="caffe2_tracing",
     )
-    parser.add_argument("--config-file", default="", metavar="FILE", help="path to config file")
+    parser.add_argument(
+        "--config-file", default="", metavar="FILE", help="path to config file"
+    )
     parser.add_argument("--run-eval", action="store_true")
     parser.add_argument("--output", help="output directory for the converted model")
     parser.add_argument(
@@ -165,7 +172,9 @@ if __name__ == "__main__":
             "Python inference is not implemented for "
             f"export_method={args.export_method}, format={args.format}."
         )
-        logger.info("Running evaluation ... this takes a long time if you export to CPU.")
+        logger.info(
+            "Running evaluation ... this takes a long time if you export to CPU."
+        )
         dataset = cfg.DATASETS.TEST[0]
         data_loader = build_detection_test_loader(cfg, dataset)
         # NOTE: hard-coded evaluator. change to the evaluator for your dataset

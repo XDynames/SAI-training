@@ -20,7 +20,8 @@ from record import record_predictions, AnnotationStore
 # constants
 WINDOW_NAME = "Stoma detections"
 # Hack for open MP on MACOS
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
+os.environ["KMP_DUPLICATE_LIB_OK"] = "True"
+
 
 def setup_cfg(args):
     # load config from file and command-line arguments
@@ -36,7 +37,7 @@ def setup_cfg(args):
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = (
         args.confidence_threshold
     )
-    cfg.MODEL.DEVICE = 'cpu'
+    cfg.MODEL.DEVICE = "cpu"
     cfg.freeze()
     return cfg
 
@@ -67,7 +68,7 @@ def get_parser():
     parser.add_argument(
         "--annotations",
         default=None,
-        help="Path to file containing image ground truth annotations"
+        help="Path to file containing image ground truth annotations",
     )
     parser.add_argument(
         "--confidence-threshold",
@@ -133,13 +134,11 @@ if __name__ == "__main__":
                     os.makedirs(args.output)
                     assert os.path.isdir(args.output), args.output
                 out_filename = os.path.join(args.output, os.path.basename(path))
-                
+
                 visualized_output.save(out_filename)
                 # Hook to write predictions for evaluation
                 record_predictions(
-                    predictions['instances'],
-                    out_filename,
-                    stoma_annotations
+                    predictions["instances"], out_filename, stoma_annotations
                 )
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
