@@ -14,8 +14,8 @@ from detectron2.export import Caffe2Tracer, add_export_config
 from detectron2.export.torchscript import dump_torchscript_IR, export_torchscript_with_instances
 from detectron2.modeling import GeneralizedRCNN, build_model
 from detectron2.structures import Boxes
-from detectron2.ros_utils.env import TORCH_VERSION
-from detectron2.ros_utils.logger import setup_logger
+from detectron2.utils.env import TORCH_VERSION
+from detectron2.utils.logger import setup_logger
 
 from stoma.data import DatasetMapper, builtin
 from stoma.modeling import KRCNNConvHead
@@ -92,7 +92,7 @@ def export_tracing(torch_model, inputs):
             inputs = [{"image": image}]
             outputs = self.torch_model.inference(inputs, do_postprocess=False)[0]
             outputs = outputs.get_fields()
-            from detectron2.ros_utils.analysis import _flatten_to_tuple
+            from detectron2.utils.analysis import _flatten_to_tuple
 
             return _flatten_to_tuple(outputs)
 

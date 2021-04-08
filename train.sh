@@ -1,4 +1,5 @@
-CUDA_VISIBLE_DEVICES="1,0" python tools/train_net.py \
-    --num-gpus 2 \
+CUDA_LAUNCH_BLOCKING=1 python3 tools/train_net.py \
     --resume \
-    --config-file configs/mask_rcnn_28x56.yaml
+    --dataset-dir datasets/arabidopsis/ \
+    --config-file configs/mask_rcnn_arabidopsis.yaml  \
+    OUTPUT_DIR './output' \

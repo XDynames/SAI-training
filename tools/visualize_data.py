@@ -10,10 +10,10 @@ import tqdm
 from detectron2.config import get_cfg
 from detectron2.data import (DatasetCatalog, MetadataCatalog,
                              build_detection_train_loader)
-from detectron2.data import detection_ros_utils as ros_utils
+from detectron2.data import detection_utils as utils
 from detectron2.data.build import filter_images_with_few_keypoints
-from detectron2.ros_utils.logger import setup_logger
-from detectron2.ros_utils.visualizer import Visualizer
+from detectron2.utils.logger import setup_logger
+from detectron2.utils.visualizer import Visualizer
 from stoma.data import DatasetMapper, builtin
 
 
@@ -74,7 +74,7 @@ if __name__ == "__main__":
             for per_image in batch:
                 # Pytorch tensor is in (C, H, W) format
                 img = per_image["image"].permute(1, 2, 0).cpu().detach().numpy()
-                img = ros_utils.convert_image_to_rgb(img, cfg.INPUT.FORMAT)
+                img = utils.convert_image_to_rgb(img, cfg.INPUT.FORMAT)
 
                 visualizer = Visualizer(img, metadata=metadata, scale=scale)
                 target_fields = per_image["instances"].get_fields()
@@ -95,7 +95,7 @@ if __name__ == "__main__":
         if cfg.MODEL.KEYPOINT_ON:
             dicts = filter_images_with_few_keypoints(dicts, 1)
         for dic in tqdm.tqdm(dicts):
-            img = ros_utils.read_image(dic["file_name"], "RGB")
+            img = utils.read_image(dic["file_name"], "RGB")
             visualizer = Visualizer(img, metadata=metadata, scale=scale)
             vis = visualizer.draw_dataset_dict(dic)
             output(vis, os.path.basename(dic["file_name"]))

@@ -127,13 +127,12 @@ class KPROIHeads(StandardROIHeads):
     def _init_keypoint_head(cls, cfg, input_shape):
         if not cfg.MODEL.KEYPOINT_ON:
             return {}
-        # fmt: off
+
         in_features       = cfg.MODEL.ROI_HEADS.IN_FEATURES
         pooler_resolution = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_RESOLUTION
-        pooler_scales     = tuple(1.0 / input_shape[k].stride for k in in_features)  # noqa
+        pooler_scales     = tuple(1.0 / input_shape[k].stride for k in in_features)
         sampling_ratio    = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_SAMPLING_RATIO
         pooler_type       = cfg.MODEL.ROI_KEYPOINT_HEAD.POOLER_TYPE
-        # fmt: on
 
         in_channels = [input_shape[f].channels for f in in_features][0]
 

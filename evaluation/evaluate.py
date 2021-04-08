@@ -19,11 +19,6 @@ def get_arguments():
         default=None
     )
     parser.add_argument(
-        "--legacy-csv",
-        help="Predictions from legacy RCNN model",
-        default=None
-    )
-    parser.add_argument(
         "--plot",
         help="Plot results",
         action='store_true'
@@ -165,17 +160,10 @@ if __name__=='__main__':
     if args.plot:
         plot_x_y_line([0,140], "Width Predictions")
         plot_scatter(width_pairs, "RCNN v2", '#2ca02c')
-        if not args.legacy_csv is None:
-            plot_scatter(legacy_all_preds[2], "Legacy RCNN", '#ff7f0e')
         plt.show()
         plot_x_y_line([160,400], "Length Predictions")
         plot_scatter(length_pairs, "RCNN v2", '#2ca02c')
-        if not args.legacy_csv is None:
-            plot_scatter(legacy_all_preds[1], "Legacy RCNN", '#ff7f0e')
         plt.show()
         plot_x_y_line([0,17000], "Area Predictions")
         plot_scatter(area_pairs, "RCNN v2", '#2ca02c')
-        if not args.legacy_csv is None:
-            plot_scatter(legacy_all_preds[0], "Legacy RCNN", '#ff7f0e')
         plt.show()
-
