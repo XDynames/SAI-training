@@ -75,7 +75,7 @@ class AnnotationStore:
 
 def record_predictions(predictions, filename, stoma_annotations):
     if stoma_annotations is None:
-        remove_intersecting_predictions(predictions)
+        remove_invlaid_predictions(predictions)
         print(f"# of predictions: {len(predictions.pred_boxes)}")
         predictions = convert_predictions_to_list_of_dictionaries(predictions)
         with open(".".join([filename[:-4] + "-predictions", "json"]), "w") as file:
@@ -102,9 +102,15 @@ def record_predictions(predictions, filename, stoma_annotations):
         json.dump({"detections": image_gt}, file)
 
 
+def remove_invlaid_predictions(predictions):
+    remove_intersecting_predictions(predictions)
+
+
 def remove_intersecting_predictions(predictions):
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
+        if is_close_to_edge:
+            continue
         intersecting = [
             j
             for j, bbox_j in enumerate(predictions.pred_boxes)
@@ -116,6 +122,7 @@ def remove_intersecting_predictions(predictions):
         ]
         if all(is_larger) or not intersecting:
             final_indices.append(i)
+    
     predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
 
 
