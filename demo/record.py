@@ -18,6 +18,8 @@ from mask_to_polygons.vectorification import geometries_from_mask
 """
 
 IOU_THRESHOLD = 0.5
+PERCENTAGE_SMALLER_THAN_AVERAGE_THRESHOLD = 0.7
+CLOSE_TO_EDGE_THRESHOLD = 20
 
 
 class AnnotationStore:
@@ -104,13 +106,11 @@ def record_predictions(predictions, filename, stoma_annotations):
 
 def remove_invlaid_predictions(predictions):
     remove_intersecting_predictions(predictions)
-
+    remove_partial_detections(predictions)
 
 def remove_intersecting_predictions(predictions):
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
-        if is_close_to_edge:
-            continue
         intersecting = [
             j
             for j, bbox_j in enumerate(predictions.pred_boxes)
@@ -125,6 +125,49 @@ def remove_intersecting_predictions(predictions):
     
     predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
 
+
+def remove_partial_detections(predictions):
+    average_area = calculate_average_bbox_area(predictions)
+    image_height,  image_width  = predictions.image_size
+    final_indices = []
+    for i, bbox_i in enumerate(predictions.pred_boxes):
+        is_near_edge = is_bbox_near_edge(bbox_i, image_height, image_width)
+        is_significantly_smaller_than_average = is_bbox_small(bbox_i, average_area)
+        print("Is smol: ", is_significantly_smaller_than_average)
+        print("Is near edge: ", is_near_edge)
+        if is_bbox_near_edge and is_significantly_smaller_than_average:
+            print("FUCK OFF")
+        else:
+            final_indices.append(i)
+    print(final_indices)
+    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
+
+
+def calculate_average_bbox_area(predictions):
+    areas = [ calculate_bbox_area(bbox) for bbox in predictions.pred_boxes ]
+    return sum(areas) / len(areas)
+
+
+def calculate_bbox_area(bbox):
+    width =  abs(bbox[2] - bbox[0])
+    height = abs(bbox[3] - bbox[1])
+    return width * height
+
+
+def is_bbox_near_edge(bbox, image_width, image_height):
+    x1, y1, x2, y2 = bbox    
+    is_near_edge = any([
+        x1 < CLOSE_TO_EDGE_THRESHOLD,
+        y1 < CLOSE_TO_EDGE_THRESHOLD,
+        image_width - x2 < CLOSE_TO_EDGE_THRESHOLD,
+        image_height - y2 < CLOSE_TO_EDGE_THRESHOLD,
+    ])
+    return is_near_edge
+
+def is_bbox_small(bbox, average_area):
+    threshold_area = PERCENTAGE_SMALLER_THAN_AVERAGE_THRESHOLD * average_area
+    bbox_area = calculate_bbox_area(bbox)
+    return bbox_area < threshold_area
 
 def assign_preds_gt(predictions, image_gt):
     gt_prediction_pairs = []
@@ -329,7 +372,7 @@ def extract_polygon_AB(x_values, y_values):
     y_min, y_max = min(y_values), max(y_values)
     x_extent = x_max - x_min
     y_extent = y_max - y_min
-    # Enables pores of arbitary orientation
+    # Enables pores of arbitrary orientation
     if x_extent > y_extent:
         major_axis_values = x_values
         minor_axis_values = y_values
