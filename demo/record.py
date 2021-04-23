@@ -124,6 +124,9 @@ def remove_intersecting_predictions(predictions):
             final_indices.append(i)
     
     predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
+    predictions.pred_classes = predictions.pred_classes[final_indices]
+    predictions.pred_masks = predictions.pred_masks[final_indices]
+    predictions.pred_keypoints = predictions.pred_keypoints[final_indices]
 
 
 def remove_partial_detections(predictions):
@@ -141,6 +144,10 @@ def remove_partial_detections(predictions):
             final_indices.append(i)
     print(final_indices)
     predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
+    predictions.pred_classes = predictions.pred_classes[final_indices]
+    predictions.pred_masks = predictions.pred_masks[final_indices]
+    predictions.pred_keypoints = predictions.pred_keypoints[final_indices]
+
 
 
 def calculate_average_bbox_area(predictions):
