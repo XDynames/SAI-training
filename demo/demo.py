@@ -37,7 +37,7 @@ def setup_cfg(args):
     cfg.MODEL.PANOPTIC_FPN.COMBINE.INSTANCES_CONFIDENCE_THRESH = (
         args.confidence_threshold
     )
-    cfg.MODEL.DEVICE = "cpu"
+    cfg.MODEL.DEVICE = "cuda" if args.gpu_inference else "cpu"
     cfg.freeze()
     return cfg
 
@@ -82,6 +82,11 @@ def get_parser():
         help="Modify config options using the command-line 'KEY VALUE' pairs",
         default=[],
         nargs=argparse.REMAINDER,
+    )
+    parser.add_argument(
+        "--gpu-inference",
+        help="Use GPU to preform inference",
+        action="store_true",
     )
     return parser
 
