@@ -4,8 +4,6 @@ import argparse
 
 import matplotlib.pyplot as plt
 
-from legacy_annotation_parser import read_legacy_val
-
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -160,17 +158,6 @@ if __name__ == "__main__":
     # Covert to csv formatted file
     if not args.csv_output is None:
         write_to_csv(stoma_id_pairs, args.csv_output)
-    if not args.legacy_csv is None:
-        files = os.listdir(args.legacy_csv)
-        legacy_all_preds = []
-        for file in files:
-            # Loads in area, length and width in that order
-            legacy_open_closed_paris = read_legacy_val(
-                os.path.join(args.legacy_csv, file)
-            )
-            legacy_all_pairs = [x for y in legacy_open_closed_paris for x in y]
-            legacy_all_preds.append(legacy_all_pairs)
-        print(legacy_all_preds)
 
     # Display Plots
     if args.plot:
