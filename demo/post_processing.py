@@ -1,6 +1,5 @@
 from record import is_overlapping
 
-IOU_THRESHOLD = 0.5
 CLOSE_TO_EDGE_DISTANCE = 20
 CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.7
 SIZE_THRESHOLD = 0.3
