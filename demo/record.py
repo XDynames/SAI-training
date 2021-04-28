@@ -17,11 +17,6 @@ from mask_to_polygons.vectorification import geometries_from_mask
     Records predictions and ground truth pairs for an image as a JSON file
 """
 
-IOU_THRESHOLD = 0.5
-CLOSE_TO_EDGE_DISTANCE = 20
-CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.7
-SIZE_THRESHOLD = 0.3
-
 
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
