@@ -18,8 +18,9 @@ from mask_to_polygons.vectorification import geometries_from_mask
 """
 
 IOU_THRESHOLD = 0.5
-PERCENTAGE_SMALLER_THAN_AVERAGE_THRESHOLD = 0.7
-CLOSE_TO_EDGE_THRESHOLD = 20
+CLOSE_TO_EDGE_DISTANCE = 20
+CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.7
+SIZE_THRESHOLD = 0.3
 
 
 class AnnotationStore:
@@ -106,7 +107,8 @@ def record_predictions(predictions, filename, stoma_annotations):
 
 def remove_invlaid_predictions(predictions):
     remove_intersecting_predictions(predictions)
-    remove_partial_detections(predictions)
+    remove_close_to_edge_detections(predictions)
+    remove_extremley_small_detections(predictions)
 
 def remove_intersecting_predictions(predictions):
     final_indices = []
@@ -123,31 +125,28 @@ def remove_intersecting_predictions(predictions):
         if all(is_larger) or not intersecting:
             final_indices.append(i)
     
-    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
-    predictions.pred_classes = predictions.pred_classes[final_indices]
-    predictions.pred_masks = predictions.pred_masks[final_indices]
-    predictions.pred_keypoints = predictions.pred_keypoints[final_indices]
+    select_predictions(predictions, final_indices)
 
 
-def remove_partial_detections(predictions):
+def select_predictions(predictions, indices):
+    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[indices]
+    predictions.pred_classes = predictions.pred_classes[indices]
+    predictions.pred_masks = predictions.pred_masks[indices]
+    predictions.pred_keypoints = predictions.pred_keypoints[indices]
+
+
+def remove_close_to_edge_detections(predictions):
     average_area = calculate_average_bbox_area(predictions)
     image_height,  image_width  = predictions.image_size
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
         is_near_edge = is_bbox_near_edge(bbox_i, image_height, image_width)
         is_significantly_smaller_than_average = is_bbox_small(bbox_i, average_area)
-        print("Is smol: ", is_significantly_smaller_than_average)
-        print("Is near edge: ", is_near_edge)
         if is_bbox_near_edge and is_significantly_smaller_than_average:
-            print("FUCK OFF")
+            continue
         else:
             final_indices.append(i)
-    print(final_indices)
-    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
-    predictions.pred_classes = predictions.pred_classes[final_indices]
-    predictions.pred_masks = predictions.pred_masks[final_indices]
-    predictions.pred_keypoints = predictions.pred_keypoints[final_indices]
-
+    select_predictions(predictions, final_indices)
 
 
 def calculate_average_bbox_area(predictions):
@@ -164,17 +163,32 @@ def calculate_bbox_area(bbox):
 def is_bbox_near_edge(bbox, image_width, image_height):
     x1, y1, x2, y2 = bbox    
     is_near_edge = any([
-        x1 < CLOSE_TO_EDGE_THRESHOLD,
-        y1 < CLOSE_TO_EDGE_THRESHOLD,
-        image_width - x2 < CLOSE_TO_EDGE_THRESHOLD,
-        image_height - y2 < CLOSE_TO_EDGE_THRESHOLD,
+        x1 < CLOSE_TO_EDGE_DISTANCE,
+        y1 < CLOSE_TO_EDGE_DISTANCE,
+        image_width - x2 < CLOSE_TO_EDGE_DISTANCE,
+        image_height - y2 < CLOSE_TO_EDGE_DISTANCE,
     ])
     return is_near_edge
 
 def is_bbox_small(bbox, average_area):
-    threshold_area = PERCENTAGE_SMALLER_THAN_AVERAGE_THRESHOLD * average_area
+    threshold_area =  CLOSE_TO_EDGE_SIZE_THRESHOLD * average_area
     bbox_area = calculate_bbox_area(bbox)
     return bbox_area < threshold_area
+
+def remove_extremley_small_detections(predictions):
+    average_area = calculate_average_bbox_area(predictions)
+    final_indices = []
+    for i, bbox_i in enumerate(predictions.pred_boxes):
+        if is_bbox_extremley_small(bbox_i, average_area):
+            continue
+        else:
+            final_indices.append(i)
+    select_predictions(predictions, final_indices)
+
+
+def is_bbox_extremley_small(bbox, average_area):
+    return calculate_bbox_area(bbox) < average_area * SIZE_THRESHOLD
+
 
 def assign_preds_gt(predictions, image_gt):
     gt_prediction_pairs = []

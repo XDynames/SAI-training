@@ -4,4 +4,5 @@ python demo/demo.py \
     --input datasets/barley/human_benchmark/images/ \
     --annotations datasets/barley/human_benchmark/annotations/GroundTruth.json \
     --confidence-threshold 0.5 \
+    --gpu \
     --opts MODEL.WEIGHTS ./barley_weights_human_trail.pth
