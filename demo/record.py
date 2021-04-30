@@ -79,6 +79,8 @@ def record_predictions(predictions, filename, stoma_annotations):
         with open(".".join([filename[:-4] + "-predictions", "json"]), "w") as file:
             json.dump({"detections": predictions}, file)
         return
+    
+    predictions = convert_predictions_to_list_of_dictionaries(predictions)
 
     ground_truth = stoma_annotations.ground_truth
     filename_id_map = stoma_annotations.filename_id_map
