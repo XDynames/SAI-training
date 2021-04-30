@@ -120,9 +120,9 @@ def write_to_csv(stoma_id_dict, filepath):
         values = [key]
         detection = stoma_id_dict[key]
         for stoma_property in column_keys:
-            values.append(detection[stoma_property]["pred"])
             if 'gt' in detection[stoma_property]:
                 values.append(detection[stoma_property]["gt"])
+            values.append(detection[stoma_property]["pred"])
         values = [str(x) for x in values]
         csv += ",".join(values) + "\n"
 
