@@ -27,7 +27,10 @@ def load_gt_pred_pairs(directory):
             continue
         with open(os.path.join(directory, file), "r") as read_file:
             image_data = json.load(read_file)
-            image_data["image_name"] = file[:-4].split("-")[0]
+            if '-predictions' in file:
+                image_data["image_name"] = file[:-16]
+            else:
+                image_data["image_name"] = file[:-5]
             image_detections.append(image_data)
     return image_detections
 
@@ -111,14 +114,14 @@ def write_to_csv(stoma_id_dict, filepath):
             "confidence",
         ]
 
-    colums_keys = ["image_name", "class", "length", "width", "area", "confidence"]
+    column_keys = ["image_name", "class", "length", "width", "area", "confidence"]
     csv = ",".join(column_names) + "\n"
     for key in stoma_id_dict.keys():
         values = [key]
         detection = stoma_id_dict[key]
-        for stoma_property in colums_keys:
+        for stoma_property in column_keys:
             values.append(detection[stoma_property]["pred"])
-            if detection[stoma_property] is dict:
+            if 'gt' in detection[stoma_property]:
                 values.append(detection[stoma_property]["gt"])
         values = [str(x) for x in values]
         csv += ",".join(values) + "\n"
