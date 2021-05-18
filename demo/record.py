@@ -19,7 +19,6 @@ from mask_to_polygons.vectorification import geometries_from_mask
 
 IOU_THRESHOLD = 0.5
 
-
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
         self.ground_truth = self.load_ground_truth(dir_annotations)
@@ -75,12 +74,13 @@ class AnnotationStore:
 
 def record_predictions(predictions, filename, stoma_annotations):
     if stoma_annotations is None:
-        remove_intersecting_predictions(predictions)
         print(f"# of predictions: {len(predictions.pred_boxes)}")
         predictions = convert_predictions_to_list_of_dictionaries(predictions)
         with open(".".join([filename[:-4] + "-predictions", "json"]), "w") as file:
             json.dump({"detections": predictions}, file)
         return
+    
+    predictions = convert_predictions_to_list_of_dictionaries(predictions)
 
     ground_truth = stoma_annotations.ground_truth
     filename_id_map = stoma_annotations.filename_id_map
@@ -100,23 +100,6 @@ def record_predictions(predictions, filename, stoma_annotations):
         json.dump(image_json, file)
     with open(".".join([filename[:-4] + "-gt", "json"]), "w") as file:
         json.dump({"detections": image_gt}, file)
-
-
-def remove_intersecting_predictions(predictions):
-    final_indices = []
-    for i, bbox_i in enumerate(predictions.pred_boxes):
-        intersecting = [
-            j
-            for j, bbox_j in enumerate(predictions.pred_boxes)
-            if not i == j and is_overlapping(bbox_i, bbox_j)
-        ]
-        is_larger = [
-            predictions.scores[i].item() >= predictions.scores[j].item()
-            for j in intersecting
-        ]
-        if all(is_larger) or not intersecting:
-            final_indices.append(i)
-    predictions.pred_boxes.tensor = predictions.pred_boxes.tensor[final_indices]
 
 
 def assign_preds_gt(predictions, image_gt):
@@ -322,7 +305,7 @@ def extract_polygon_AB(x_values, y_values):
     y_min, y_max = min(y_values), max(y_values)
     x_extent = x_max - x_min
     y_extent = y_max - y_min
-    # Enables pores of arbitary orientation
+    # Enables pores of arbitrary orientation
     if x_extent > y_extent:
         major_axis_values = x_values
         minor_axis_values = y_values

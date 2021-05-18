@@ -4,8 +4,6 @@ import argparse
 
 import matplotlib.pyplot as plt
 
-from legacy_annotation_parser import read_legacy_val
-
 
 def get_arguments():
     parser = argparse.ArgumentParser()
@@ -29,7 +27,10 @@ def load_gt_pred_pairs(directory):
             continue
         with open(os.path.join(directory, file), "r") as read_file:
             image_data = json.load(read_file)
-            image_data["image_name"] = file[:-4].split("-")[0]
+            if '-predictions' in file:
+                image_data["image_name"] = file[:-16]
+            else:
+                image_data["image_name"] = file[:-5]
             image_detections.append(image_data)
     return image_detections
 
@@ -113,15 +114,15 @@ def write_to_csv(stoma_id_dict, filepath):
             "confidence",
         ]
 
-    colums_keys = ["image_name", "class", "length", "width", "area", "confidence"]
+    column_keys = ["image_name", "class", "length", "width", "area", "confidence"]
     csv = ",".join(column_names) + "\n"
     for key in stoma_id_dict.keys():
         values = [key]
         detection = stoma_id_dict[key]
-        for stoma_property in colums_keys:
-            values.append(detection[stoma_property]["pred"])
-            if detection[stoma_property] is dict:
+        for stoma_property in column_keys:
+            if 'gt' in detection[stoma_property]:
                 values.append(detection[stoma_property]["gt"])
+            values.append(detection[stoma_property]["pred"])
         values = [str(x) for x in values]
         csv += ",".join(values) + "\n"
 
@@ -160,17 +161,6 @@ if __name__ == "__main__":
     # Covert to csv formatted file
     if not args.csv_output is None:
         write_to_csv(stoma_id_pairs, args.csv_output)
-    if not args.legacy_csv is None:
-        files = os.listdir(args.legacy_csv)
-        legacy_all_preds = []
-        for file in files:
-            # Loads in area, length and width in that order
-            legacy_open_closed_paris = read_legacy_val(
-                os.path.join(args.legacy_csv, file)
-            )
-            legacy_all_pairs = [x for y in legacy_open_closed_paris for x in y]
-            legacy_all_preds.append(legacy_all_pairs)
-        print(legacy_all_preds)
 
     # Display Plots
     if args.plot:

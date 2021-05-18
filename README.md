@@ -43,33 +43,20 @@ To train the end-to-end Mask R-CNN model first convert the xml annotations into 
 python datasets/create_cocofied_annotations.py
 ```
 
-## Demo
+## Inference Demonstration
 
-### Detection
+First download the trained model from the table below:
 
-First download the trained model from [this link](https://cloudstor.aarnet.edu.au/plus/s/sfkLBWae8bmal6s). Then run
+| Model       | BB AP | Mask AP | Keypoint AP | AP open | AP closed | weights |
+| ----------- | :---------: | :---------: | :---------: | :-----: | :-------: | ------- |
+| [Barley](configs/mask_rcnn_barley.yaml) | |   |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
+| [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | |     |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
 
-```
-python demo/demo.py \
-    --config-file configs/faster_rcnn_R_50_FPN.yaml \
-    --input datasets/stoma_detection/val/ \
-    --confidence-threshold 0.5 \
-    --opts MODEL.WEIGHTS R_50.pth
-```
-
-### End-to-End
-
-First download the trained model from [this link](https://cloudstor.aarnet.edu.au/plus/s/1AJlUYksklDsDZH). Then run
-
+Then run
 ```
 python demo/demo.py \
     --config-file configs/mask_rcnn_R_50_FPN.yaml \
     --input datasets/stoma/val/ \
     --confidence-threshold 0.5 \
-    --opts MODEL.WEIGHTS mask_R_50.pth
+    --opts MODEL.WEIGHTS model_weights.pth
 ```
-
-| Model       | Keypoint AP | AP open | AP closed | weights |
-| ----------- | :---------: | :-----: | :-------: | ------- |
-| [28x28](configs/mask_rcnn_R_50_FPN.yaml)    | 76    | 84 | 68 | [download](https://cloudstor.aarnet.edu.au/plus/s/1AJlUYksklDsDZH) |
-| [28x56](configs/mask_rcnn_28x56.yaml)       | 77    | 87 | 67 | [downlaod](https://cloudstor.aarnet.edu.au/plus/s/WLYQxavvCB1JNQt) |

@@ -13,6 +13,8 @@ from detectron2.engine.defaults import DefaultPredictor
 from detectron2.utils.video_visualizer import VideoVisualizer
 from detectron2.utils.visualizer import ColorMode, Visualizer
 
+from post_processing import filter_invalid_predictions
+
 
 class VisualizationDemo(object):
     def __init__(self, cfg, instance_mode=ColorMode.IMAGE, parallel=False):
@@ -48,6 +50,10 @@ class VisualizationDemo(object):
         """
         vis_output = None
         predictions = self.predictor(image)
+        instances = predictions["instances"].to(self.cpu_device)
+        filter_invalid_predictions(instances)
+        predictions['instances'] = instances
+
         # Convert image from OpenCV BGR format to Matplotlib RGB format.
         image = image[:, :, ::-1]
         visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
@@ -58,19 +64,7 @@ class VisualizationDemo(object):
         visualizer._draw_line = visualizer.draw_line
         visualizer.draw_line = types.MethodType(draw_thin_line, visualizer)
 
-        if "panoptic_seg" in predictions:
-            panoptic_seg, segments_info = predictions["panoptic_seg"]
-            vis_output = visualizer.draw_panoptic_seg_predictions(
-                panoptic_seg.to(self.cpu_device), segments_info
-            )
-        else:
-            if "sem_seg" in predictions:
-                vis_output = visualizer.draw_sem_seg(
-                    predictions["sem_seg"].argmax(dim=0).to(self.cpu_device)
-                )
-            if "instances" in predictions:
-                instances = predictions["instances"].to(self.cpu_device)
-                vis_output = visualizer.draw_instance_predictions(predictions=instances)
+        vis_output = visualizer.draw_instance_predictions(predictions=instances)
 
         return predictions, vis_output
 
