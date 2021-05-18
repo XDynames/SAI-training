@@ -50,7 +50,7 @@ First download the trained model from the table below:
 | Model       | BB AP | Mask AP | Keypoint AP | AP open | AP closed | weights |
 | ----------- | :---------: | :---------: | :---------: | :-----: | :-------: | ------- |
 | [Barley](configs/mask_rcnn_barley.yaml) | |   |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
-| [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | |     |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
+| [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | 74.67 |   43.74  |  43.89   | 53.99 | 33.78 | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
 
 Then run
 ```
