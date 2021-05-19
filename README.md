@@ -1,7 +1,7 @@
 # Stoma Detection and Measurement
 
 ## Installation
-Ensure you have libgeo installed: `sudo apt-get install libgeos-dev`
+Ensure you have libgeos installed: `sudo apt-get install libgeos-dev`
 Install the appropriate versions of [Pytorch](https://pytorch.org/get-started/locally/) and [Detectron2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html).
 
 Run `bash setup.sh` to download the validation image set, associated ground truth annotations and model weights.
