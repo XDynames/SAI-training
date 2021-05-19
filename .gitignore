@@ -19,7 +19,7 @@ _ext
 *.pyc
 *.pyd
 *.so
-StomaDet.egg-info/
+StomaAI.egg-info/
 build/
 dist/
 wheels/
