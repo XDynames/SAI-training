@@ -21,8 +21,10 @@ import os
 from collections import OrderedDict
 
 import torch
+from tabulate import tabulate
 
 import detectron2.utils.comm as comm
+from detectron2.utils.logger import setup_logger
 from detectron2.checkpoint import DetectionCheckpointer
 from detectron2.config import get_cfg
 from detectron2.data import MetadataCatalog, build_detection_train_loader
@@ -147,6 +149,8 @@ def main(args):
             res.update(Trainer.test_with_TTA(cfg, model))
         if comm.is_main_process():
             verify_results(cfg, res)
+        
+        print_results_table(res)
         return res
 
     """
@@ -161,6 +165,16 @@ def main(args):
             [hooks.EvalHook(0, lambda: trainer.test_with_TTA(cfg, trainer.model))]
         )
     return trainer.train()
+
+def print_results_table(results):
+    headings = ["Pore Status", "Boudning Box %AP", "Keypoint %AP", "Segmentation %AP"]
+    row_open = ["Open", results['bbox']['AP-Open'], results['keypoints']['AP-Open'], results['segm']['AP-Open']]
+    row_closed = ["Closed", results['bbox']['AP-Closed'], results['keypoints']['AP-Closed'], results['segm']['AP-Closed']]
+    row_both = ["All", results['bbox']['AP'], results['keypoints']['AP'], results['segm']['AP']]
+    table = [row_both, row_open, row_closed]
+    table = tabulate(table, headers=headings, tablefmt="pipe", floatfmt=".3f")
+    logger = setup_logger(name='stoma.tools.train_net')
+    logger.info("Summarised inference results:\n" + table)
 
 
 if __name__ == "__main__":

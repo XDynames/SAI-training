@@ -1,62 +1,49 @@
 # Stoma Detection and Measurement
 
 ## Installation
+Install the appropriate versions of [Pytorch](https://pytorch.org/get-started/locally/) and [Detectron2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html).
 
-First install detectron2.
+Run `bash setup.sh` to download the validation image set, associated ground truth annotations and model weights.
+These can then used to both reproduce the reported evaluation scores or generate visualisations of measurements on the two validation sets provided.
 
-Then run
-
+## Inference Evaluation
+After installing you can check the evaluation metrics reported for both the models by running:
 ```
-python setup.py build develop
+bash evaluate_arabidopsis.sh
+bash evaluate_barley.sh
 ```
+These should agree with the following:
+| Model       | BB AP | Mask AP | Keypoint AP | AP open | AP closed | weights |
+| ----------- | :---------: | :---------: | :---------: | :-----: | :-------: | ------- |
+| [Barley](configs/mask_rcnn_barley.yaml) | 80.67 | 69.06 | 77.44 | 86.31 | 68.57 | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
+| [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | 74.67 |   43.74  |  43.89   | 53.99 | 33.78 | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
 
-Link datasets in the corresponding folder:
-
+## Inference Demonstration
+After installing you can visualise the measurements produced by each of the models on their validation datasets by running:
 ```
-stoma/
-tools/
-datasets/
-|-- finalized_data/
-    |-- image_annotation
-        Original_imgs
-    stoma/
-    |-- images/  (ln -s datasets/finalized_data/Original_imgs datasets/stoma/images)
-        annotations/ (run python datasets/create_cocofied_annotations.py)
-        val/
-    stoma_detection/ (data from the py-faster-rcnn folder)
-    |-- annotations
-        train
-        val
-    
-
+bash demo_arabidopsis.sh
+bash demo_barley.sh
 ```
+These will create a new folder each, `output_demo_arabidopsis` and `output_demo_barley`, containing the visualised predictions.
 
 ## Training
-
-```
-python tools/train_net.py --resume --config-file configs/faster_rcnn_R_50_FPN.yaml
-```
-
-To train the end-to-end Mask R-CNN model first convert the xml annotations into coco format json with
-
+First convert the xml annotations into coco format json using:
 ```
 python datasets/create_cocofied_annotations.py
 ```
-
-## Inference Demonstration
-
-First download the trained model from the table below:
-
-| Model       | BB AP | Mask AP | Keypoint AP | AP open | AP closed | weights |
-| ----------- | :---------: | :---------: | :---------: | :-----: | :-------: | ------- |
-| [Barley](configs/mask_rcnn_barley.yaml) | |   |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
-| [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | |     |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
-
-Then run
+Then arrange your datae into the folder structure bellow:
 ```
-python demo/demo.py \
-    --config-file configs/mask_rcnn_R_50_FPN.yaml \
-    --input datasets/stoma/val/ \
-    --confidence-threshold 0.5 \
-    --opts MODEL.WEIGHTS model_weights.pth
+|-- datasets/
+    |-- <species name>
+        |-- stoma/
+            |-- annotations/
+                |-- val.json
+                |-- train.json
+            |-- images/
+                |-- All images
+            |-- val/
+                |-- Validation images
 ```
+Modify the `train_new_model.sh` script by changing the `--dataset-dir` to point to your data.
+
+
