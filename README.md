@@ -43,13 +43,13 @@ To train the end-to-end Mask R-CNN model first convert the xml annotations into 
 python datasets/create_cocofied_annotations.py
 ```
 
-## Inference Demonstration
+## Inference Evaluation and Demonstration
 
 First download the trained model from the table below:
 
 | Model       | BB AP | Mask AP | Keypoint AP | AP open | AP closed | weights |
 | ----------- | :---------: | :---------: | :---------: | :-----: | :-------: | ------- |
-| [Barley](configs/mask_rcnn_barley.yaml) | |   |     |  |  | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
+| [Barley](configs/mask_rcnn_barley.yaml) | 80.67 | 69.06 | 77.44 | 86.31 | 68.57 | [download](https://cloudstor.aarnet.edu.au/plus/s/KWFjWBLlE18n9M9) |
 | [Arabidopsis](configs/mask_rcnn_arabidopsis.yaml)  | 74.67 |   43.74  |  43.89   | 53.99 | 33.78 | [download](https://cloudstor.aarnet.edu.au/plus/s/iLB4PwuKqjbdSWg) |
 
 Then run

@@ -65,12 +65,14 @@ def get_extensions():
 
 
 setup(
-    name="StomaDet",
+    name="StomaAI",
     version="0.1.1",
-    author="Adelaide Intelligent Machines",
-    url="https://github.com/stanstarks/AdelaiDet",
-    description="AdelaiDet is AIM's research "
-    "platform for stoma detection based on Detectron2.",
+    author="JPB",
+    url="https://github.com/XDynames/SAI-training",
+    description="SAI is a joint collaboration between"
+    "The University of Adelaide's Australian Institue for"
+    " Machine Learning and Plant Energy Biology ARC Center"
+    " of Excellence.",
     packages=find_packages(exclude=("configs", "tests")),
     python_requires=">=3.6",
     install_requires=[
