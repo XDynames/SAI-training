@@ -1,4 +1,5 @@
 # Stoma Detection and Measurementx
+## About
 
 ## Installation
 Ensure you have libgeos installed: `sudo apt-get install libgeos-dev`
@@ -54,3 +55,4 @@ To use this ensure you have installed both [Docker]() and [Nvidia Docker]()
 The image can be built using `docker build . -f dockerfiles/Dockerfile -t sai`
 You can then run the container with the command `docker run --shm-size 8g --gpus all sai <command to execute>` replacing `<command to execute>` with one of the above commands. For example to reproduce our reported results on barley stoma you would run `docker run --shm-size 8g --gpus all sai bash evaluate_barley.sh`.
 
+## Referencing
