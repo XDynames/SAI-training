@@ -55,7 +55,7 @@ def crop_pore_from_slide(image, bbox: List[int], offset: int = 50):
 if __name__ == "__main__":
     args = get_arguments()
     stoma_annotations = AnnotationStore(args.annotations, retrieval=True)
-    # Recieve pore ID from user
+    # Receive pore ID from user
     id_of_pore_to_retrieve = args.pore_id
 
     # Search pore ID in original image annotation .jsons to find its image

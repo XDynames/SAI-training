@@ -167,7 +167,7 @@ def main(args):
     return trainer.train()
 
 def print_results_table(results):
-    headings = ["Pore Status", "Boudning Box %AP", "Keypoint %AP", "Segmentation %AP"]
+    headings = ["Pore Status", "Bounding Box %AP", "Keypoint %AP", "Segmentation %AP"]
     row_open = ["Open", results['bbox']['AP-Open'], results['keypoints']['AP-Open'], results['segm']['AP-Open']]
     row_closed = ["Closed", results['bbox']['AP-Closed'], results['keypoints']['AP-Closed'], results['segm']['AP-Closed']]
     row_both = ["All", results['bbox']['AP'], results['keypoints']['AP'], results['segm']['AP']]

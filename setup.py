@@ -70,7 +70,7 @@ setup(
     author="JPB",
     url="https://github.com/XDynames/SAI-training",
     description="SAI is a joint collaboration between"
-    "The University of Adelaide's Australian Institue for"
+    "The University of Adelaide's Australian Institute for"
     " Machine Learning and Plant Energy Biology ARC Center"
     " of Excellence.",
     packages=find_packages(exclude=("configs", "tests")),

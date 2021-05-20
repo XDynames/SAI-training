@@ -1,11 +1,11 @@
-# Stoma Detection and Measurement
+# Stoma Detection and Measurementx
 
 ## Installation
 Ensure you have libgeos installed: `sudo apt-get install libgeos-dev`
 
 Install the appropriate versions of [Pytorch](https://pytorch.org/get-started/locally/) and [Detectron2](https://detectron2.readthedocs.io/en/latest/tutorials/install.html).
 
-Run `bash setup.sh` to download the validation image set, associated ground truth annotations, model weights and install the StomaAI package with its dependancies.
+Run `bash setup.sh` to download the validation image set, associated ground truth annotations, model weights and install the StomaAI package with its dependencies.
 These can then used to both reproduce the reported evaluation scores or generate visualisations of measurements on the two validation sets provided.
 
 ## Inference Evaluation
@@ -33,7 +33,7 @@ First convert the xml annotations into coco format json using:
 ```
 python datasets/create_cocofied_annotations.py
 ```
-Then arrange your datae into the folder structure bellow:
+Then arrange your data into the folder structure bellow:
 ```
 |-- datasets/
     |-- <species name>
@@ -48,4 +48,9 @@ Then arrange your datae into the folder structure bellow:
 ```
 Modify the `train_new_model.sh` script by changing the `--dataset-dir` to point to your data.
 
+## Docker
+For convenience we provide a docker file that can be built to run our code in.
+To use this ensure you have installed both [Docker]() and [Nvidia Docker]()
+The image can be built using `docker build . -f dockerfiles/Dockerfile -t sai`
+You can then run the container with the command `docker run --shm-size 8g --gpus all sai <command to execute>` replacing `<command to execute>` with one of the above commands. For example to reproduce our reported results on barley stoma you would run `docker run --shm-size 8g --gpus all sai bash evaluate_barley.sh`.
 

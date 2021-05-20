@@ -1,13 +1,10 @@
-FROM xdynames/detectron2-container:latest
+FROM pytorch/pytorch:1.8.0-cuda11.1-cudnn8-devel
 
-RUN sudo apt-get update && sudo apt-get install -y libgeos-dev libglib2.0-0 
+RUN apt-get update && apt-get install -y libgeos-dev libglib2.0-0 libsm6 libxext6 libxrender-dev
 
-WORKDIR /home/appusr/sai
+RUN python -m pip install detectron2 -f \
+  https://dl.fbaipublicfiles.com/detectron2/wheels/cu111/torch1.8/index.html
 
 COPY . .
 
-RUN ls
-
-RUN  pip install --user -e .
-
-CMD [ "bash train.sh" ]
+RUN bash setup.sh
