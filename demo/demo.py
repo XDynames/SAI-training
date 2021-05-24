@@ -15,7 +15,7 @@ from detectron2.utils.logger import setup_logger
 from predictor import VisualizationDemo
 from stoma.modeling import KRCNNConvHead
 from stoma.data.builtin import register_stoma
-from record import record_predictions, AnnotationStore
+from record import record_predictions, AnnotationStore, draw_width_predictions
 
 # constants
 WINDOW_NAME = "Stoma detections"
@@ -140,11 +140,13 @@ if __name__ == "__main__":
                     assert os.path.isdir(args.output), args.output
                 out_filename = os.path.join(args.output, os.path.basename(path))
 
-                visualized_output.save(out_filename)
+                #visualized_output.save(out_filename)
                 # Hook to write predictions for evaluation
-                record_predictions(
+                predictions = record_predictions(
                     predictions["instances"], out_filename, stoma_annotations
                 )
+                mpl_figure = draw_width_predictions(visualized_output, predictions)
+                mpl_figure.savefig(out_filename, dpi=400, bbox_inches = 'tight', pad_inches = 0)
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])

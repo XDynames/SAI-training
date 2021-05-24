@@ -9,6 +9,7 @@ from pycocotools.coco import COCO
 import shapely
 from shapely import affinity
 import shapely.geometry as shapes
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
@@ -78,7 +79,7 @@ def record_predictions(predictions, filename, stoma_annotations):
         predictions = convert_predictions_to_list_of_dictionaries(predictions)
         with open(".".join([filename[:-4] + "-predictions", "json"]), "w") as file:
             json.dump({"detections": predictions}, file)
-        return
+        return predictions
     
     predictions = convert_predictions_to_list_of_dictionaries(predictions)
 
@@ -244,11 +245,30 @@ def mask_to_poly(mask):
     if mask.sum() == 0:
         return []
     poly = geometries_from_mask(np.uint8(mask), IDENTITY, "polygons")
-    poly = poly[0]["coordinates"][0]
-    flat_poly = []
-    for point in poly:
-        flat_poly.extend([point[0], point[1]])
-    return flat_poly
+    if len(poly) > 1:
+        poly = find_maximum_area_polygon(poly)
+    else:
+        poly = poly[0]
+    poly = poly["coordinates"][0]
+    return flatten_polygon(poly)
+
+def find_maximum_area_polygon(polygons):
+    maximum = 0
+    for i, polygon in enumerate(polygons):
+        try:
+            polygon = shapely.geometry.Polygon(polygon['coordinates'][0])
+        except:
+            continue
+        if polygon.area > maximum:
+            maximum = polygon.area
+            index = i
+    return polygons[index]
+
+def flatten_polygon(polygon):
+    flat_polygon = []
+    for point in polygon:
+        flat_polygon.extend([point[0], point[1]])
+    return flat_polygon
 
 
 # Convert polygon -> binary mask COCO.annToMask
@@ -346,3 +366,69 @@ def extract_polygon_AB(x_values, y_values):
             1,
         ]
     return keypoints
+
+
+def draw_width_predictions(detectron_vis, predictions):
+    image = detectron_vis.get_image()
+    fig, ax = setup_plot(image)
+    keypoints(ax, predictions)
+    return fig
+
+
+def setup_plot(image):
+    fig, ax = plt.subplots()
+    ax.axis("off")
+    ax.imshow(image)
+    return fig, ax
+
+
+def keypoints(mpl_axis, annotations):
+    for annotation in annotations:
+        draw_width_keypoints(mpl_axis, annotation)
+
+
+def draw_width_keypoints(mpl_axis, annotation):
+    keypoints_width = annotation["CD_keypoints"]
+    # Dummy value for closed stoma -> no width
+    if keypoints_width[0] == -1:
+        return
+    keypoints_x = extract_x_keypoints(keypoints_width)
+    keypoints_y = extract_y_keypoints(keypoints_width)
+    draw_points_and_lines(mpl_axis, keypoints_x, keypoints_y)
+
+
+def extract_x_keypoints(keypoints):
+    return [keypoints[0], keypoints[3]]
+
+
+def extract_y_keypoints(keypoints):
+    return [keypoints[1], keypoints[4]]
+
+
+def draw_points_and_lines(mpl_axis, keypoints_x, keypoints_y):
+    colour = "red"
+    draw_lines(mpl_axis, [keypoints_x, keypoints_y], colour)
+    draw_points(mpl_axis, zip(keypoints_x, keypoints_y), colour)
+
+
+def draw_points(mpl_axis, keypoints, colour, radius=2):
+    for keypoint in keypoints:
+        mpl_axis.add_patch(
+            mpl.patches.Circle(
+                keypoint,
+                radius=radius,
+                fill=True,
+                color=colour,
+            )
+        )
+
+
+def draw_lines(mpl_axis, keypoints, colour):
+    mpl_axis.add_line(
+        mpl.lines.Line2D(
+            keypoints[0],
+            keypoints[1],
+            linewidth=0.5,
+            color=colour,
+        )
+    )
