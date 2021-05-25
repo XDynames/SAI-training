@@ -146,7 +146,6 @@ def convert_predictions_to_dictionary(i, predictions):
         pred_CD = [-1, -1, 1.0 - 1, -1, 1]
         pred_width = 0
         pred_area = 0
-
     prediction_dict = {
         "bbox": predictions.pred_boxes[i].tensor.tolist()[0],
         "area": pred_area,
@@ -233,7 +232,7 @@ def find_CD(polygon, keypoints=None, gt=True):
     else:
         D = intersections[1].coords.xy
         C = intersections[0].coords.xy
-    return [*C[0], *C[1], 1, *D[0], *D[1], 1]
+    return [C[0][0], C[1][0], 1, D[0][0], D[1][0], 1]
 
 
 def l2_dist(keypoints):
