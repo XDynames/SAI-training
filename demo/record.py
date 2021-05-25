@@ -146,11 +146,20 @@ def convert_predictions_to_dictionary(i, predictions):
         pred_CD = [-1, -1, 1.0 - 1, -1, 1]
         pred_width = 0
         pred_area = 0
+    
+    pred_length = l2_dist(pred_AB)
+    if pred_length < 5 and pred_polygon:
+        x_points = [x for x in pred_polygon[0::2]]
+        y_points = [y for y in pred_polygon[1::2]]
+        pred_AB = extract_polygon_AB(x_points, y_points)
+        pred_length = l2_dist(pred_AB)
+
+
     prediction_dict = {
         "bbox": predictions.pred_boxes[i].tensor.tolist()[0],
         "area": pred_area,
         "AB_keypoints": pred_AB,
-        "length": l2_dist(pred_AB),
+        "length": pred_length,
         "CD_keypoints": pred_CD,
         "width": pred_width,
         "category_id": pred_class,

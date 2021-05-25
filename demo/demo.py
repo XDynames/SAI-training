@@ -7,6 +7,7 @@ import time
 
 import cv2
 import tqdm
+import matplotlib.pyplot as plt
 
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
@@ -147,6 +148,7 @@ if __name__ == "__main__":
                 )
                 mpl_figure = draw_width_predictions(visualized_output, predictions)
                 mpl_figure.savefig(out_filename, dpi=400, bbox_inches = 'tight', pad_inches = 0)
+                plt.close(mpl_figure)
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])

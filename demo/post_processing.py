@@ -1,3 +1,6 @@
+from scipy.stats import iqr
+import numpy as np
+
 from record import is_overlapping
 
 CLOSE_TO_EDGE_DISTANCE = 20
@@ -9,6 +12,9 @@ def filter_invalid_predictions(predictions):
     remove_intersecting_predictions(predictions)
     remove_close_to_edge_detections(predictions)
     remove_extremley_small_detections(predictions)
+    print(len(predictions.pred_boxes))
+    remove_image_outliers(predictions)
+    print(len(predictions.pred_boxes))
 
 
 def remove_intersecting_predictions(predictions):
@@ -43,7 +49,7 @@ def remove_close_to_edge_detections(predictions):
     for i, bbox_i in enumerate(predictions.pred_boxes):
         is_near_edge = is_bbox_near_edge(bbox_i, image_height, image_width)
         is_significantly_smaller_than_average = is_bbox_small(bbox_i, average_area)
-        if is_bbox_near_edge and is_significantly_smaller_than_average:
+        if is_near_edge and is_significantly_smaller_than_average:
             continue
         else:
             final_indices.append(i)
@@ -89,3 +95,28 @@ def remove_extremley_small_detections(predictions):
 
 def is_bbox_extremley_small(bbox, average_area):
     return calculate_bbox_area(bbox) < average_area * SIZE_THRESHOLD
+
+
+def remove_image_outliers(predictions):
+    predicted_lengths = get_lengths(predictions)
+    inter_quartile_range = iqr(predicted_lengths, interpolation='midpoint')
+    median = np.median(predicted_lengths)
+    lower_whisker = median - 2 * inter_quartile_range
+    higher_whisker = median + 2 * inter_quartile_range
+
+    final_indices = []
+    for i, length in enumerate(predicted_lengths):
+        if lower_whisker <= length <= higher_whisker:
+            final_indices.append(i)
+    
+    select_predictions(predictions, final_indices)
+
+def get_lengths(predictions):
+    lengths = []
+    for keypoints in predictions.pred_keypoints:
+        lengths.append(l2_dist(keypoints))
+    return lengths
+
+def l2_dist(keypoints):
+    A, B = [keypoints[0][0], keypoints[0][1]], [keypoints[1][0], keypoints[1][1]]
+    return pow((A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2, 0.5)
