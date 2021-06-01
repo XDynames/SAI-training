@@ -17,6 +17,7 @@ from mask_to_polygons.vectorification import geometries_from_mask
 """
 
 IOU_THRESHOLD = 0.5
+MINIMUM_LENGTH = 5
 
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
@@ -156,7 +157,7 @@ def convert_predictions_to_dictionary(i, predictions):
         pred_area = 0
     
     pred_length = l2_dist(pred_AB)
-    if pred_length < 5 and pred_polygon:
+    if pred_length < MINIMUM_LENGTH and pred_polygon:
         x_points = [x for x in pred_polygon[0::2]]
         y_points = [y for y in pred_polygon[1::2]]
         pred_AB = extract_polygon_AB(x_points, y_points)
