@@ -140,8 +140,7 @@ if __name__ == "__main__":
                     os.makedirs(args.output)
                     assert os.path.isdir(args.output), args.output
                 out_filename = os.path.join(args.output, os.path.basename(path))
-
-                #visualized_output.save(out_filename)
+                
                 # Hook to write predictions for evaluation
                 predictions = record_predictions(
                     predictions["instances"], out_filename, stoma_annotations

@@ -4,7 +4,7 @@ import numpy as np
 from record import is_overlapping
 
 CLOSE_TO_EDGE_DISTANCE = 20
-CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.7
+CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.85
 SIZE_THRESHOLD = 0.3
 
 
@@ -12,9 +12,6 @@ def filter_invalid_predictions(predictions):
     remove_intersecting_predictions(predictions)
     remove_close_to_edge_detections(predictions)
     remove_extremley_small_detections(predictions)
-    print(len(predictions.pred_boxes))
-    remove_image_outliers(predictions)
-    print(len(predictions.pred_boxes))
 
 
 def remove_intersecting_predictions(predictions):
@@ -67,8 +64,8 @@ def calculate_bbox_area(bbox):
     return width * height
 
 
-def is_bbox_near_edge(bbox, image_width, image_height):
-    x1, y1, x2, y2 = bbox    
+def is_bbox_near_edge(bbox, image_height, image_width):
+    x1, y1, x2, y2 = bbox
     is_near_edge = any([
         x1 < CLOSE_TO_EDGE_DISTANCE,
         y1 < CLOSE_TO_EDGE_DISTANCE,
@@ -81,6 +78,7 @@ def is_bbox_small(bbox, average_area):
     threshold_area =  CLOSE_TO_EDGE_SIZE_THRESHOLD * average_area
     bbox_area = calculate_bbox_area(bbox)
     return bbox_area < threshold_area
+
 
 def remove_extremley_small_detections(predictions):
     average_area = calculate_average_bbox_area(predictions)
@@ -101,8 +99,8 @@ def remove_image_outliers(predictions):
     predicted_lengths = get_lengths(predictions)
     inter_quartile_range = iqr(predicted_lengths, interpolation='midpoint')
     median = np.median(predicted_lengths)
-    lower_whisker = median - 2 * inter_quartile_range
-    higher_whisker = median + 2 * inter_quartile_range
+    lower_whisker = median -  2.0 * inter_quartile_range
+    higher_whisker = median +  2.0 * inter_quartile_range
 
     final_indices = []
     for i, length in enumerate(predicted_lengths):
@@ -110,6 +108,7 @@ def remove_image_outliers(predictions):
             final_indices.append(i)
     
     select_predictions(predictions, final_indices)
+    predicted_lengths = get_lengths(predictions)
 
 def get_lengths(predictions):
     lengths = []
