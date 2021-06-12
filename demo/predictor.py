@@ -68,6 +68,7 @@ class VisualizationDemo(object):
 
         return predictions, vis_output
 
+
     def _frame_from_video(self, video):
         while video.isOpened():
             success, frame = video.read()

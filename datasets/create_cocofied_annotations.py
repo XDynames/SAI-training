@@ -10,34 +10,6 @@ from tqdm import tqdm
 
 from detectron2.utils.logger import setup_logger
 
-barley_human_trail_images = [
-    '10Dec_D2L_1mMGABA_1hLight_Captured 19.xml',
-    '18Mar_2mMGABA_15uMABA_Captured 31.xml',
-    '25Feb_2mMGABA_10uMABA_Captured 32.xml',
-    '10Dec_D2L_1mMGABA_1hLight_Captured 24.xml',
-    '18Mar_2mMGABA_15uMABA_Captured 34.xml',
-    '25Feb_2mMGABA_10uMABA_Captured 37.xml',
-    '10Dec_D2L_1mMGABA_1hLight_Captured 29.xml',
-    '18Mar_2mMGABA_15uMABA_Captured 37.xml',
-    '5Mar_2mMGABA_10uMABA_Captured 10.xml',
-    '10Dec_D2L_1mMGABA_1hLight_Captured 30.xml',
-    '25Feb_2mMGABA_10uMABA_Captured 27.xml',
-    '5Mar_2mMGABA_10uMABA_Captured 3.xml',
-    '18Mar_2mMGABA_15uMABA_Captured 28.xml',
-    '25Feb_2mMGABA_10uMABA_Captured 29.xml',
-    '5Mar_2mMGABA_10uMABA_Captured 6.xml'
-]
-
-arabidopsis_human_trail_images = [
-    'B-t-1-1.xml', 'B-t-1-5.xml', 'B-t-2-3.xml',
-    'C-W-1-3.xml', 'C-W-2-2.xml', 'C-g-1-1.xml',
-    'C-g-1-5.xml', 'C-g-2-2.xml', 'C-t-1-2.xml',
-    'C-t-2-1.xml', 'B-t-1-3.xml', 'B-t-2-1.xml',
-    'C-W-1-1.xml', 'C-W-1-6.xml', 'C-W-2-4.xml',
-    'C-g-1-3.xml', 'C-g-1-7.xml', 'C-g-2-4.xml',
-    'C-t-1-4.xml', 'C-t-2-4.xml',
-]
-
 
 def get_parser():
     parser = argparse.ArgumentParser(description="Detectron2 demo for builtin models")
@@ -289,14 +261,6 @@ if __name__ == "__main__":
     logger.info("Arguments: " + str(args))
 
     anno_list = os.listdir(args.anno_dir)
-    if args.arabidopsis:
-        human_trail_images = arabidopsis_human_trail_images
-    elif args.combined:
-        arabidopsis_human_trail_images.extend(barley_human_trail_images)
-        human_trail_images = arabidopsis_human_trail_images
-    else:
-        human_trail_images = barley_human_trail_images
-    anno_list = list(set(anno_list) - set(human_trail_images))
 
     # split into train and val
     if args.shuffled_splits:
