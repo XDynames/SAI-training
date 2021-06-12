@@ -1,7 +1,10 @@
+import os
+import json
+
 from scipy.stats import iqr
 import numpy as np
 
-from record import is_overlapping
+from record import is_overlapping, Predicted_Lengths
 
 CLOSE_TO_EDGE_DISTANCE = 20
 CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.85
@@ -95,27 +98,55 @@ def is_bbox_extremley_small(bbox, average_area):
     return calculate_bbox_area(bbox) < average_area * SIZE_THRESHOLD
 
 
-def remove_image_outliers(predictions):
-    predicted_lengths = get_lengths(predictions)
-    inter_quartile_range = iqr(predicted_lengths, interpolation='midpoint')
-    median = np.median(predicted_lengths)
+def remove_outliers_from_records(output_directory):
+    # calculate length IQR
+    lower_bound, upper_bound = calculate_length_limits()
+    # filter detections
+    for filename in os.listdir(output_directory):
+        if ".json" in filename:
+            if "-gt" in filename:
+                continue
+            record = load_json(os.path.join(output_directory, filename))
+            record = record['detections']
+            if not "-prediction" in filename:
+                predictions = unpack_predictions(record)
+            else:
+                predictions = record
+            length_predictions = extract_lengths(predictions)
+            print(length_predictions)
+            
+
+    #inal_indices = []
+    #for i, length in enumerate(predicted_lengths):
+    #    if lower_whisker <= length <= higher_whisker:
+    #        final_indices.append(i)
+    
+    #select_predictions(predictions, final_indices)
+    #predicted_lengths = get_lengths(predictions)
+
+
+def calculate_length_limits():
+    inter_quartile_range = iqr(Predicted_Lengths, interpolation='midpoint')
+    median = np.median(Predicted_Lengths)
     lower_whisker = median -  2.0 * inter_quartile_range
     higher_whisker = median +  2.0 * inter_quartile_range
+    return lower_whisker, higher_whisker
 
-    final_indices = []
-    for i, length in enumerate(predicted_lengths):
-        if lower_whisker <= length <= higher_whisker:
-            final_indices.append(i)
-    
-    select_predictions(predictions, final_indices)
-    predicted_lengths = get_lengths(predictions)
 
-def get_lengths(predictions):
+def load_json(filename):
+    with open(os.path.join(filename), "r") as read_file:
+        record = json.load(read_file)
+    return record
+
+
+def unpack_predictions(record):
+    predictions = []
+    for detection in record:
+        predictions.append(detection['pred'])
+    return predictions
+
+def extract_lengths(predictions):
     lengths = []
-    for keypoints in predictions.pred_keypoints:
-        lengths.append(l2_dist(keypoints))
+    for prediction in predictions:
+        lengths.append(prediction['length'])
     return lengths
-
-def l2_dist(keypoints):
-    A, B = [keypoints[0][0], keypoints[0][1]], [keypoints[1][0], keypoints[1][1]]
-    return pow((A[0] - B[0]) ** 2 + (A[1] - B[1]) ** 2, 0.5)

@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
 
+Predicted_Lengths = []
+
 """
     Records predictions and ground truth pairs for an image as a JSON file
 """
@@ -175,6 +177,7 @@ def convert_predictions_to_dictionary(i, predictions):
         "segmentation": [pred_polygon],
         "confidence": predictions.scores[i].item(),
     }
+    Predicted_Lengths.append(pred_length)
     return prediction_dict
 
 
