@@ -99,9 +99,6 @@ def is_bbox_extremley_small(bbox, average_area):
 
 
 def remove_outliers_from_records(output_directory):
-    # calculate length IQR
-    lower_bound, upper_bound = calculate_length_limits()
-    # filter detections
     for filename in os.listdir(output_directory):
         if ".json" in filename:
             if "-gt" in filename:
@@ -113,24 +110,9 @@ def remove_outliers_from_records(output_directory):
             else:
                 predictions = record
             length_predictions = extract_lengths(predictions)
-            print(length_predictions)
-            
-
-    #inal_indices = []
-    #for i, length in enumerate(predicted_lengths):
-    #    if lower_whisker <= length <= higher_whisker:
-    #        final_indices.append(i)
-    
-    #select_predictions(predictions, final_indices)
-    #predicted_lengths = get_lengths(predictions)
-
-
-def calculate_length_limits():
-    inter_quartile_range = iqr(Predicted_Lengths, interpolation='midpoint')
-    median = np.median(Predicted_Lengths)
-    lower_whisker = median -  2.0 * inter_quartile_range
-    higher_whisker = median +  2.0 * inter_quartile_range
-    return lower_whisker, higher_whisker
+            before = len(record)
+            remove_outliers(length_predictions, record)
+        # Write updated record to file
 
 
 def load_json(filename):
@@ -145,8 +127,32 @@ def unpack_predictions(record):
         predictions.append(detection['pred'])
     return predictions
 
+
 def extract_lengths(predictions):
     lengths = []
     for prediction in predictions:
         lengths.append(prediction['length'])
     return lengths
+
+
+def remove_outliers(lengths, record):
+    to_remove = find_outlier_indices(lengths)
+    for index in reversed(to_remove):
+        record.pop(index)
+
+
+def find_outlier_indices(lengths):
+    to_remove = []
+    lower_bound, upper_bound = calculate_length_limits()
+    for i, length in enumerate(lengths):
+        if length < lower_bound:
+            to_remove.append(i)
+    return to_remove
+
+
+def calculate_length_limits():
+    inter_quartile_range = iqr(Predicted_Lengths, interpolation='midpoint')
+    median = np.median(Predicted_Lengths)
+    lower_whisker = median -  2.0 * inter_quartile_range
+    higher_whisker = median +  2.0 * inter_quartile_range
+    return lower_whisker, higher_whisker
