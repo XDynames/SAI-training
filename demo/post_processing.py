@@ -103,7 +103,8 @@ def remove_outliers_from_records(output_directory):
         if ".json" in filename:
             if "-gt" in filename:
                 continue
-            record = load_json(os.path.join(output_directory, filename))
+            filepath = os.path.join(output_directory, filename)
+            record = load_json(filepath)
             record = record['detections']
             if not "-prediction" in filename:
                 predictions = unpack_predictions(record)
@@ -112,12 +113,12 @@ def remove_outliers_from_records(output_directory):
             length_predictions = extract_lengths(predictions)
             before = len(record)
             remove_outliers(length_predictions, record)
-        # Write updated record to file
+            write_to_json(record, filepath)
 
 
-def load_json(filename):
-    with open(os.path.join(filename), "r") as read_file:
-        record = json.load(read_file)
+def load_json(filepath):
+    with open(filepath, "r") as file:
+        record = json.load(file)
     return record
 
 
@@ -156,3 +157,8 @@ def calculate_length_limits():
     lower_whisker = median -  2.0 * inter_quartile_range
     higher_whisker = median +  2.0 * inter_quartile_range
     return lower_whisker, higher_whisker
+
+
+def write_to_json(record, filepath):
+    with open(filepath, "w") as file:
+        json.dump({"detections": record}, file)

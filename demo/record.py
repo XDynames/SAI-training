@@ -292,7 +292,7 @@ def flatten_polygon(polygon):
 
 
 def calc_area(gt_annotation):
-    polygon = gt_annotation['segmentation']
+    polygon = gt_annotation['segmentation'][0]
     x_points = [x for x in polygon[0::2]]
     y_points = [y for y in polygon[1::2]]
     polygon = [[x, y] for x, y in zip(x_points, y_points)]
