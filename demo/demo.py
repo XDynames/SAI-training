@@ -16,7 +16,12 @@ from detectron2.utils.logger import setup_logger
 from predictor import VisualizationDemo
 from stoma.modeling import KRCNNConvHead
 from stoma.data.builtin import register_stoma
-from record import record_predictions, AnnotationStore, draw_width_predictions
+from record import (
+    record_predictions,
+    AnnotationStore,
+    draw_width_predictions
+)
+from post_processing import remove_outliers_from_records
 
 # constants
 WINDOW_NAME = "Stoma detections"
@@ -120,6 +125,7 @@ if __name__ == "__main__":
         if len(args.input) == 1:
             args.input = glob.glob(os.path.expanduser(args.input[0]))
             assert args.input, "The input path(s) was not found"
+
         for path in tqdm.tqdm(args.input, disable=not args.output):
             # use PIL, to be consistent with evaluation
             img = read_image(path, format="BGR")
@@ -153,6 +159,10 @@ if __name__ == "__main__":
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
                 if cv2.waitKey(0) == 27:
                     break  # esc to quit
+        
+        # Experiment wide filtering
+        remove_outliers_from_records(args.output)
+
     elif args.webcam:
         assert args.input is None, "Cannot have both --input and --webcam!"
         assert args.output is None, "output not yet supported with --webcam!"
