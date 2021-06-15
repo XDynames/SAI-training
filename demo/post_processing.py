@@ -58,7 +58,10 @@ def remove_close_to_edge_detections(predictions):
 
 def calculate_average_bbox_area(predictions):
     areas = [ calculate_bbox_area(bbox) for bbox in predictions.pred_boxes ]
-    return sum(areas) / len(areas)
+    n_bbox = len(areas)
+    if n_bbox == 0:
+        return 0
+    return sum(areas) / n_bbox
 
 
 def calculate_bbox_area(bbox):
