@@ -57,3 +57,15 @@ The image can be built using `docker build . -f dockerfiles/Dockerfile -t sai`
 You can then run the container with the command `docker run --shm-size 8g --gpus all sai <command to execute>` replacing `<command to execute>` with one of the above commands. For example to reproduce our reported results on barley stoma you would run `docker run --shm-size 8g --gpus all sai bash evaluate_barley.sh`.
 
 ## Referencing
+If you use SAI as part of your work please cite us:
+
+@article {Sai2022.02.07.479482,
+	author = {Sai, Na and Bockman, James Paul and Chen, Hao and Watson-Haigh, Nathan and Xu, Bo and Feng, Xueying and Piechatzek, Adriane and Shen, Chunhua and Gilliham, Matthew},
+	title = {SAI: Fast and automated quantification of stomatal parameters on microscope images},
+	elocation-id = {2022.02.07.479482},
+	year = {2022},
+	doi = {10.1101/2022.02.07.479482},
+	URL = {https://www.biorxiv.org/content/early/2022/02/10/2022.02.07.479482},
+	eprint = {https://www.biorxiv.org/content/early/2022/02/10/2022.02.07.479482.full.pdf},
+	journal = {bioRxiv}
+}
