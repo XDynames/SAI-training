@@ -75,4 +75,4 @@ else
         -o $COMBINED_WEIGHTS_FILE
 fi
 echo "Installing SAI..."
-python setup.py build develop
+python setup.py build develop --no-deps
