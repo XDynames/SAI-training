@@ -1,4 +1,4 @@
-python3 tools/train_net.py \
+python tools/train_net.py \
     --eval-only \
     --resume \
     --dataset-dir datasets/barley/ \
