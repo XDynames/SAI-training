@@ -1,6 +1,6 @@
 # StomaAI: Detection and Measurement
 ## About
-StomAI (SAI) aims to automate common cell measurement procedures used in plant physiology studies. Previously researchers would spend days manually measuring pore's lengths, widths and opening areas. Now this can be done in minutes. SAI is a joint collaboration between The University of Adelaide's Australian Institute for Machine Learning and Plant Energy Biology ARC Center of Excellence.
+StomaAI (SAI) aims to automate common cell measurement procedures used in plant physiology studies. Previously researchers would spend days manually measuring pore's lengths, widths and opening areas. Now this can be done in minutes. SAI is a joint collaboration between The University of Adelaide's Australian Institute for Machine Learning and Plant Energy Biology ARC Center of Excellence.
 
 ## Installation
 Ensure you have libgeos installed: `sudo apt-get install libgeos-dev`
