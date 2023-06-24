@@ -1,8 +1,0 @@
-services:
-  train-sai:
-    image: sai-training
-    volumes:
-      - :./configs
-      - :./
-      - :/mnt/data/stomata
-    command:

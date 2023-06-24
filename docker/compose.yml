@@ -1,0 +1,19 @@
+services:
+  train-sai:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+    image: sai-training
+    volumes:
+      - ./configs:/configs
+      - ./output:/output
+      - /mnt/data/stomata:/data
+    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/arabidopsis --config-file /configs/mask_rcnn_arabidopsis.yaml OUTPUT_DIR /output/arabidopsis_output"
+    shm_size: 2gb
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
