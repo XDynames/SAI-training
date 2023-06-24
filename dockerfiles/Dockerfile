@@ -5,6 +5,6 @@ RUN apt-get update && apt-get install -y libgeos-dev libglib2.0-0 libsm6 libxext
 RUN python -m pip install detectron2 -f \
   https://dl.fbaipublicfiles.com/detectron2/wheels/cu111/torch1.8/index.html
 
-COPY . .
+COPY ./src /src
 
 RUN bash setup.sh
