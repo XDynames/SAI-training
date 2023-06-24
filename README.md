@@ -2,6 +2,13 @@
 ## About
 StomaAI (SAI) aims to automate the measuring process of stomate pore features from microscope images that are commonly used in plant physiological research. Previously researchers would spend days manually measuring pore's lengths, widths and opening areas. Now this can be done in minutes. SAI is a joint collaboration between The University of Adelaide's Australian Institute for Machine Learning and Plant Energy Biology ARC Center of Excellence.
 
+## Docker
+For convenience we provide a docker file that can be built to run our code in.
+To use this ensure you have installed both [Docker](https://docs.docker.com/engine/install/) and [Nvidia Docker](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html).
+You can modify the file in `/docker/compose.yml` to adjust the configuration file being used, data locations and where to write outputs.
+Running: `docker compose --project-directory ./docker/ up -d --build` will build and start the training container.
+To monitor training you can use tensorboard specifying the log directory as the output folder of the run.
+
 ## Installation
 Ensure you have libgeos installed: `sudo apt-get install libgeos-dev`
 
@@ -53,12 +60,6 @@ Then arrange your data into the folder structure bellow:
                 |-- Validation images
 ```
 Modify the `train_new_model.sh` script by changing the `--dataset-dir` to point to your data.
-
-## Docker
-For convenience we provide a docker file that can be built to run our code in.
-To use this ensure you have installed both [Docker]() and [Nvidia Docker]()
-The image can be built using `docker build . -f dockerfiles/Dockerfile -t sai`
-You can then run the container with the command `docker run --shm-size 8g --gpus all sai <command to execute>` replacing `<command to execute>` with one of the above commands. For example to reproduce our reported results on barley stoma you would run `docker run --shm-size 8g --gpus all sai bash evaluate_barley.sh`.
 
 ## Referencing
 If you use SAI as part of your work please cite us:
