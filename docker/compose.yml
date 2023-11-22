@@ -4,11 +4,12 @@ services:
       context: ..
       dockerfile: ./docker/Dockerfile
     image: sai-training
+    container_name: sai-training
     volumes:
-      - ./configs:/configs
-      - ./output:/output
-      - ./datasets/stoma:/data
-    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/arabidopsis --config-file /configs/mask_rcnn_arabidopsis.yaml OUTPUT_DIR /output/arabidopsis_output"
+      - ../configs:/configs
+      - ../output:/output
+      - ../datasets:/data
+    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/barley --config-file /configs/mask_rcnn_barley_2.yaml OUTPUT_DIR /output/barley_v3"
     shm_size: 2gb
     deploy:
       resources:

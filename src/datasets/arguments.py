@@ -5,17 +5,17 @@ def get_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--annotation-path",
-        default="datasets/stoma/barley/annotations",
+        default="datasets/barley/stoma/annotations",
         help="path to annotation xmls",
     )
     parser.add_argument(
         "--image-path",
-        default="datasets/stoma/barley/images",
+        default="datasets/barley/stoma/images",
         help="path to images",
     )
     parser.add_argument(
         "--output-path",
-        default="datasets/stoma/barley/annotations",
+        default="datasets/barley/stoma/annotations",
         help="A file or directory to save the converted annotations.",
     )
     parser.add_argument(

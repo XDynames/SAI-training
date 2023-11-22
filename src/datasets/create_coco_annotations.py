@@ -14,21 +14,13 @@ from tqdm import tqdm
 
 from arguments import get_parser
 
+BOUNDING_BOX_PADDING = 10
 NAMES_TO_CATEGORY_ID = {
     "Closed Stomata": 0,
     "Guard cells": 2,
     "Open Stomata": 1,
     "Subsidiary cells": 3,
 }
-"""
-ANNOTATION_CONVERSION_FUNCTIONS = [
-    convert_closed_stomata,
-    convert_gaurd_cells,
-    convert_open_stomata,
-    convert_stomatal_pore,
-    convert_subsidiary_cell,
-]
-"""
 
 
 class AnnotationCoverter:
@@ -98,7 +90,7 @@ class AnnotationCoverter:
         width, height = self._get_image_dimensions(sample["image"])
         image_info = {
             "id": self._image_id,
-            "image_name": image_name,
+            "file_name": image_name,
             "height": height,
             "width": width,
         }
@@ -110,7 +102,7 @@ class AnnotationCoverter:
         return [width, height]
 
     def _get_image_name(self, image_path: Path) -> str:
-        return image_path.stem
+        return image_path.stem + image_path.suffix
 
     def _add_annotation_details_to_split(self, sample: Dict):
         annotations = self._load_image_annotations(sample["annotations"])
@@ -277,11 +269,7 @@ class AnnotationCoverter:
 
     def _assign_bounding_box_to_annotation(self, key: str):
         for annotation in self._annotations_by_type[key]:
-            bbox = self._find_stomata_bbox(annotation)
-            if bbox is None:
-                logger.info(f"Didn't Match {annotation}")
-                continue
-            self._add_annotation_to_dataset(annotation, bbox, key)
+            self._add_annotation_to_dataset(annotation, key)
 
     def _find_stomata_bbox(
         self,
@@ -299,10 +287,11 @@ class AnnotationCoverter:
     def _add_annotation_to_dataset(
         self,
         annotation: Dict,
-        bbox: List[float],
         key: str,
     ):
-        bounding_box = self._xyxy_to_xywh(bbox)
+        bounding_box = self._bbox_dict_to_xyxy(annotation["bndbox"])
+        bounding_box = self._xyxy_to_xywh(bounding_box)
+        bounding_box = self._add_padding_to_bounding_box(bounding_box)
         converted_annotation = {
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
@@ -311,6 +300,8 @@ class AnnotationCoverter:
             "segmentation": [
                 [float(value) for value in annotation["polygon"].values()]
             ],
+            "num_keypoints": 2,
+            "keypoints": [0, 0, 0, 0, 0, 0],
             "image_id": self._image_id,
             "id": self._annotation_id,
         }
@@ -325,6 +316,15 @@ class AnnotationCoverter:
             xyxy_bbox[3] - xyxy_bbox[1],
         ]
         return xywh_bbox
+
+    def _add_padding_to_bounding_box(self, bounding_box: List[float]) -> List[float]:
+        bounding_box = [
+            bounding_box[0] - BOUNDING_BOX_PADDING,
+            bounding_box[1] - BOUNDING_BOX_PADDING,
+            bounding_box[2] + BOUNDING_BOX_PADDING,
+            bounding_box[3] + BOUNDING_BOX_PADDING,
+        ]
+        return bounding_box
 
     def _get_bbox_area(self, xyhw_bbox: List[float]) -> float:
         return xyhw_bbox[2] * xyhw_bbox[3]

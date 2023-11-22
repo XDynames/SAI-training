@@ -1,0 +1,10 @@
+_BASE_: "mask_rcnn_barley.yaml"
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 4
+SOLVER:
+  IMS_PER_BATCH: 2
+  #BASE_LR: 0.0005
+  #STEPS: (15000, 25000)
+  AMP: 
+    ENABLED: True
