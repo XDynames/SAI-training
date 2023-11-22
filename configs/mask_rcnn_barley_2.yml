@@ -1,0 +1,4 @@
+_BASE_: "mask_rcnn_barley.yml"
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 3

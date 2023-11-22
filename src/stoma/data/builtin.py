@@ -24,7 +24,12 @@ _SPLITS_STOMA = {
 }
 
 _STOMA_META = {
-    "thing_classes": ["Closed", "Open"],
+    "thing_classes": [
+        "Closed Stomata",
+        "Open Stomata",
+        "Guard cells",
+        "Subsidiary cells",
+    ],
     "keypoint_names": ("left", "right"),
     "keypoint_flip_map": (("left", "right"),),
     "keypoint_connection_rules": [("left", "right", (102, 204, 255))],

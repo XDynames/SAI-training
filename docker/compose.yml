@@ -7,7 +7,7 @@ services:
     volumes:
       - ./configs:/configs
       - ./output:/output
-      - /mnt/data/stomata:/data
+      - ./datasets/stoma:/data
     command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/arabidopsis --config-file /configs/mask_rcnn_arabidopsis.yaml OUTPUT_DIR /output/arabidopsis_output"
     shm_size: 2gb
     deploy:
