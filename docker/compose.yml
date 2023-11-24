@@ -9,7 +9,7 @@ services:
       - ../configs:/configs
       - ../output:/output
       - ../datasets:/data
-    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/barley --config-file /configs/mask_rcnn_barley_2.yaml OUTPUT_DIR /output/barley_v3"
+    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/barley --config-file /configs/mask_rcnn_barley_2.yaml OUTPUT_DIR /output/barley_v4"
     shm_size: 2gb
     deploy:
       resources:

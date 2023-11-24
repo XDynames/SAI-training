@@ -152,10 +152,16 @@ class AnnotationCoverter:
         self._create_closed_stomata_annotations()
 
     def _create_guard_cell_annotations(self):
+        # Pairs the cells of this type into a single instance
         self._assign_bounding_box_to_annotation("Guard cells")
+        # Adds each cell in the pair as individual instances
+        # self._add_annotations_to_dataset("Guard cells")
 
     def _create_subsidiary_annotations(self):
+        # Pairs the cells of this type into a single instance
         self._assign_bounding_box_to_annotation("Subsidiary cells")
+        # Adds each cell in the pair as individual instances
+        # self._add_annotations_to_dataset("Subsidiary cells")
 
     def _create_closed_stomata_annotations(self):
         for annotation in self._annotations_by_type["Closed Stomata"]:
@@ -267,22 +273,84 @@ class AnnotationCoverter:
                 return pore_annotation
         return None
 
-    def _assign_bounding_box_to_annotation(self, key: str):
+    def _add_annotations_to_dataset(self, key: str):
         for annotation in self._annotations_by_type[key]:
             self._add_annotation_to_dataset(annotation, key)
+
+    def _assign_bounding_box_to_annotation(self, key: str):
+        annotations = defaultdict(list)
+        for annotation in self._annotations_by_type[key]:
+            # Find paris of guard and subsidiary cells and add them to the same annotation
+            index = self._find_stomata_bbox(annotation)
+            if index is None:
+                logger.info(f"Didn't Match {annotation}")
+                continue
+            annotations[index].append(annotation)
+        self._add_paired_annotations_to_dataset(annotations, key)
 
     def _find_stomata_bbox(
         self,
         annotation: Dict,
     ) -> Union[List[float], None]:
-        for bounding_box in self._stomata_bboxes_xyxy:
+        for i, bounding_box in enumerate(self._stomata_bboxes_xyxy):
             annotation_bbox = self._bbox_dict_to_xyxy(annotation["bndbox"])
             if self._is_bbox_a_in_bbox_b(annotation_bbox, bounding_box):
-                return bounding_box
+                return i
         return None
 
     def _is_bbox_a_in_bbox_b(self, a: List[float], b: List[float]):
         return a[0] >= b[0] and a[1] >= b[1] and a[2] <= b[2] and a[3] <= b[3]
+
+    def _add_paired_annotations_to_dataset(self, annotations: Dict, key: str):
+        for bbox_index, pair in annotations.items():
+            self._add_paired_annotation_to_dataset(bbox_index, pair, key)
+
+    def _add_paired_annotation_to_dataset(
+        self,
+        bbox_index: int,
+        pair: List[Dict],
+        key: str,
+    ):
+        bounding_box = self._calculate_bounding_box_of_pair(pair)
+        segmentation = []
+        for annotation in pair:
+            mask = [float(value) for value in annotation["polygon"].values()]
+            segmentation.append(mask)
+        converted_annotation = {
+            "bbox": bounding_box,
+            "area": self._get_bbox_area(bounding_box),
+            "iscrowd": 0,
+            "category_id": NAMES_TO_CATEGORY_ID[key],
+            "segmentation": segmentation,
+            "num_keypoints": 2,
+            "keypoints": [0, 0, 0, 0, 0, 0],
+            "image_id": self._image_id,
+            "id": self._annotation_id,
+        }
+        self._annotations.append(converted_annotation)
+        self._annotation_id += 1
+
+    def _calculate_bounding_box_of_pair(self, pair: List[Dict]) -> List[float]:
+        if len(pair) == 1:
+            bounding_box = self._bbox_dict_to_xyxy(pair[0]["bndbox"])
+            return self._xyxy_to_xywh(bounding_box)
+        bounding_box_1 = self._bbox_dict_to_xyxy(pair[0]["bndbox"])
+        bounding_box_2 = self._bbox_dict_to_xyxy(pair[1]["bndbox"])
+        bounding_box = self._calculate_bbox_of_bboxes(bounding_box_1, bounding_box_2)
+        return self._xyxy_to_xywh(bounding_box)
+
+    def _calculate_bbox_of_bboxes(
+        self,
+        bbox_1: List[float],
+        bbox_2: List[float],
+    ) -> List[float]:
+        bounding_box = [
+            min(bbox_1[0], bbox_2[0]),
+            min(bbox_1[1], bbox_2[1]),
+            max(bbox_1[2], bbox_2[2]),
+            max(bbox_1[3], bbox_2[3]),
+        ]
+        return bounding_box
 
     def _add_annotation_to_dataset(
         self,
