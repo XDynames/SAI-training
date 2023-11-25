@@ -1,0 +1,13 @@
+_BASE_: "mask_rcnn_arabidopsis.yaml"
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 3
+SOLVER:
+  IMS_PER_BATCH: 2
+  #BASE_LR: 0.0005
+  #STEPS: (15000, 25000)
+  AMP: 
+    ENABLED: True
+DATASETS:
+  TRAIN: ("stomata_arabidopsis_train",)
+  TEST: ("stomata_arabidopsis_val",)

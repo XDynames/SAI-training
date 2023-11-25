@@ -8,3 +8,6 @@ SOLVER:
   #STEPS: (15000, 25000)
   AMP: 
     ENABLED: True
+DATASETS:
+  TRAIN: ("stomata_barley_train",)
+  TEST: ("stomata_barley_val",)

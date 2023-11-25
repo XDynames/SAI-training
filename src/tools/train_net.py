@@ -44,7 +44,7 @@ from detectron2.evaluation import (
 from detectron2.modeling import GeneralizedRCNNWithTTA
 from fvcore.common.file_io import PathManager
 
-from stoma.data import DatasetMapper, builtin
+from stoma.data import DatasetMapper, builtin, barley, arabidopsis
 from stoma.modeling import KRCNNConvHead
 
 
@@ -137,7 +137,8 @@ def setup(args):
 
 def main(args):
     cfg = setup(args)
-    builtin.register_stoma(args.dataset_dir)
+    barley.register_stomata_dataset(args.dataset_dir)
+    arabidopsis.register_stomata_dataset(args.dataset_dir)
 
     if args.eval_only:
         model = Trainer.build_model(cfg)
@@ -149,7 +150,7 @@ def main(args):
             res.update(Trainer.test_with_TTA(cfg, model))
         if comm.is_main_process():
             verify_results(cfg, res)
-        
+
         print_results_table(res)
         return res
 
@@ -166,14 +167,30 @@ def main(args):
         )
     return trainer.train()
 
+
 def print_results_table(results):
     headings = ["Pore Status", "Bounding Box %AP", "Keypoint %AP", "Segmentation %AP"]
-    row_open = ["Open", results['bbox']['AP-Open'], results['keypoints']['AP-Open'], results['segm']['AP-Open']]
-    row_closed = ["Closed", results['bbox']['AP-Closed'], results['keypoints']['AP-Closed'], results['segm']['AP-Closed']]
-    row_both = ["All", results['bbox']['AP'], results['keypoints']['AP'], results['segm']['AP']]
+    row_open = [
+        "Open",
+        results["bbox"]["AP-Open"],
+        results["keypoints"]["AP-Open"],
+        results["segm"]["AP-Open"],
+    ]
+    row_closed = [
+        "Closed",
+        results["bbox"]["AP-Closed"],
+        results["keypoints"]["AP-Closed"],
+        results["segm"]["AP-Closed"],
+    ]
+    row_both = [
+        "All",
+        results["bbox"]["AP"],
+        results["keypoints"]["AP"],
+        results["segm"]["AP"],
+    ]
     table = [row_both, row_open, row_closed]
     table = tabulate(table, headers=headings, tablefmt="pipe", floatfmt=".3f")
-    logger = setup_logger(name='stoma.tools.train_net')
+    logger = setup_logger(name="stoma.tools.train_net")
     logger.info("Summarised inference results:\n" + table)
 
 

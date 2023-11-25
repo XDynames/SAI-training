@@ -17,8 +17,8 @@ from arguments import get_parser
 BOUNDING_BOX_PADDING = 10
 NAMES_TO_CATEGORY_ID = {
     "Closed Stomata": 0,
-    "Guard cells": 2,
     "Open Stomata": 1,
+    "Guard cells": 2,
     "Subsidiary cells": 3,
 }
 
@@ -72,13 +72,17 @@ class AnnotationCoverter:
             self._reset_annotations()
 
     def _save_coco_annotations(self, filename: str):
+        categories = [
+            {"id": NAMES_TO_CATEGORY_ID[name], "name": name}
+            for name in NAMES_TO_CATEGORY_ID.keys()
+        ]
+        if self._is_arabidopsis:
+            categories = categories[:-1]
+
         to_save = {
             "images": self._image_details,
             "annotations": self._annotations,
-            "categories": [
-                {"id": NAMES_TO_CATEGORY_ID[name], "name": name}
-                for name in NAMES_TO_CATEGORY_ID.keys()
-            ],
+            "categories": categories,
         }
         output_path = self._output_path_root.joinpath(filename)
         with output_path.open("w") as file:
