@@ -8,13 +8,13 @@ services:
     volumes:
       - ../configs:/configs
       - ../output:/output
-      - ../datasets:/data
-    command: /bin/sh -c "python ./tools/train_net.py --resume --dataset-dir /data/arabidopsis --config-file /configs/mask_rcnn_arabidopsis_2.yaml OUTPUT_DIR /output/arabidopsis_v2"
+      - /mnt/data/stomata:/data
+    command: /bin/sh -c "python ./tools/train_net.py --num-gpus 2 --resume --dataset-dir /data/arabidopsis_v3 --config-file /configs/mask_rcnn_arabidopsis_2.yaml OUTPUT_DIR /output/arabidopsis_v3"
     shm_size: 2gb
     deploy:
       resources:
         reservations:
           devices:
             - driver: nvidia
-              count: 1
+              count: 2
               capabilities: [ gpu ]
