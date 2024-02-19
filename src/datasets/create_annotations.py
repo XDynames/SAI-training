@@ -7,6 +7,7 @@ from typing import Dict, List, Union
 
 
 import xmltodict
+from demo.record import AnnotationStore
 from loguru import logger
 from PIL import Image
 from tqdm import tqdm
@@ -17,9 +18,9 @@ from arguments import get_parser
 BOUNDING_BOX_PADDING = 10
 NAMES_TO_CATEGORY_ID = {
     "Closed Stomata": 0,
-    "Guard cells": 2,
     "Open Stomata": 1,
-    "Subsidiary cells": 3,
+    "Stomatal Pore": 2,
+    "Subsidiary Cell": 3,
 }
 
 
@@ -146,10 +147,15 @@ class AnnotationCoverter:
         return bounding_box
 
     def _create_annotations(self):
-        self._create_guard_cell_annotations()
-        self._create_subsidiary_annotations()
+        self._create_pore_annotations()
+        # self._create_guard_cell_annotations()
         self._create_open_stomata_annotations()
         self._create_closed_stomata_annotations()
+        self._create_subsidiary_annotations()
+
+    def _create_pore_annotations(self):
+        # Adds each open pore as an individual instance
+        self._add_annotations_to_dataset("Stomatal Pore")
 
     def _create_guard_cell_annotations(self):
         # Pairs the cells of this type into a single instance
@@ -165,22 +171,57 @@ class AnnotationCoverter:
 
     def _create_closed_stomata_annotations(self):
         for annotation in self._annotations_by_type["Closed Stomata"]:
-            pore_annotation = self._find_pore_of_stomata(annotation)
-            if pore_annotation is None:
-                logger.info(f"Didn't Find a pore for stomata {annotation}")
-                continue
-            self._add_closed_stomata_to_dataset(annotation, pore_annotation)
+            guard_cell_annotations = self._maybe_find_guard_cells_of_stomata(annotation)
+            pore_annotation = self._maybe_find_pore_of_stomata(annotation)
+            if guard_cell_annotations is not None and pore_annotation is not None:
+                self._add_closed_stomata_to_dataset(
+                    annotation,
+                    guard_cell_annotations,
+                    pore_annotation,
+                )
 
-    def _add_closed_stomata_to_dataset(self, stomata: Dict, pore: Dict):
+    def _maybe_find_pore_of_stomata(self, annotation):
+        pore_annotation = self._find_pore_of_stomata(annotation)
+        if pore_annotation is None:
+            logger.info(f"Didn't Find a pore for stomata {annotation}")
+        return pore_annotation
+
+    def _maybe_find_guard_cells_of_stomata(self, annotation):
+        guard_cell_annotation = self._find_guard_cells_of_stomata(annotation)
+        if len(guard_cell_annotation) != 2:
+            logger.info(f"Didn't Find a guard cell annotation for stomata {annotation}")
+            return None
+        return guard_cell_annotation
+
+    def _find_guard_cells_of_stomata(self, annotation: Dict) -> Dict:
+        guard_cell_annotations = []
+        stomata_bbox = self._bbox_dict_to_xyxy(annotation["bndbox"])
+        stomata_bbox = self._add_padding_to_bounding_box(stomata_bbox)
+
+        for guard_cell_annotation in self._annotations_by_type["Guard cells"]:
+            guard_cell_bbox = self._bbox_dict_to_xyxy(guard_cell_annotation["bndbox"])
+            if self._is_bbox_a_in_bbox_b(guard_cell_bbox, stomata_bbox):
+                guard_cell_annotations.append(guard_cell_annotation)
+        return guard_cell_annotations
+
+    def _add_closed_stomata_to_dataset(
+        self,
+        stomata: Dict,
+        guard_cells: List[Dict],
+        pore: Dict,
+    ):
         xyxy_bbox = self._bbox_dict_to_xyxy(stomata["bndbox"])
         bounding_box = self._xyxy_to_xywh(xyxy_bbox)
         keypoints = self._get_closed_stomata_keypoints(pore["line"])
+        segmentation = [
+            self._annotation_to_polygon(guard_cell) for guard_cell in guard_cells
+        ]
         converted_annotation = {
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
             "category_id": NAMES_TO_CATEGORY_ID["Closed Stomata"],
-            "segmentation": [self._line_to_polygon(keypoints)],
+            "segmentation": segmentation,
             "num_keypoints": 2,
             "keypoints": keypoints,
             "image_id": self._image_id,
@@ -212,21 +253,33 @@ class AnnotationCoverter:
 
     def _create_open_stomata_annotations(self):
         for annotation in self._annotations_by_type["Open Stomata"]:
-            pore_annotation = self._find_pore_of_stomata(annotation)
-            if pore_annotation is None:
-                logger.info(f"Didn't Find a pore for stomata {annotation}")
-            self._add_open_stomata_to_dataset(annotation, pore_annotation)
+            guard_cell_annotations = self._maybe_find_guard_cells_of_stomata(annotation)
+            pore_annotation = self._maybe_find_pore_of_stomata(annotation)
+            if guard_cell_annotations is not None and pore_annotation is not None:
+                self._add_open_stomata_to_dataset(
+                    annotation,
+                    guard_cell_annotations,
+                    pore_annotation,
+                )
 
-    def _add_open_stomata_to_dataset(self, stomata: Dict, pore: Dict):
+    def _add_open_stomata_to_dataset(
+        self,
+        stomata: Dict,
+        guard_cells: List[Dict],
+        pore: Dict,
+    ):
         xyxy_bbox = self._bbox_dict_to_xyxy(stomata["bndbox"])
         bounding_box = self._xyxy_to_xywh(xyxy_bbox)
         keypoints = self._get_open_stomata_keypoints(pore["polygon"])
+        segmentation = [
+            self._annotation_to_polygon(guard_cell) for guard_cell in guard_cells
+        ]
         converted_annotation = {
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
             "category_id": NAMES_TO_CATEGORY_ID["Open Stomata"],
-            "segmentation": [[float(item) for item in pore["polygon"].values()]],
+            "segmentation": segmentation,
             "num_keypoints": 2,
             "keypoints": keypoints,
             "image_id": self._image_id,
@@ -234,6 +287,9 @@ class AnnotationCoverter:
         }
         self._annotations.append(converted_annotation)
         self._annotation_id += 1
+
+    def _annotation_to_polygon(self, annotation) -> List[float]:
+        return [float(item) for item in annotation["polygon"].values()]
 
     def _get_open_stomata_keypoints(self, polygon: List[str]) -> List[float]:
         polygon = [float(item) for item in polygon.values()]
@@ -275,6 +331,8 @@ class AnnotationCoverter:
 
     def _add_annotations_to_dataset(self, key: str):
         for annotation in self._annotations_by_type[key]:
+            if "line" in annotation:
+                continue
             self._add_annotation_to_dataset(annotation, key)
 
     def _assign_bounding_box_to_annotation(self, key: str):
@@ -365,9 +423,7 @@ class AnnotationCoverter:
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
             "category_id": NAMES_TO_CATEGORY_ID[key],
-            "segmentation": [
-                [float(value) for value in annotation["polygon"].values()]
-            ],
+            "segmentation": [self._annotation_to_polygon(annotation)],
             "num_keypoints": 2,
             "keypoints": [0, 0, 0, 0, 0, 0],
             "image_id": self._image_id,
