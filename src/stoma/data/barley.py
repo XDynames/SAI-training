@@ -19,7 +19,7 @@ _STOMA_DETECTION_META = {
     "thing_classes": [
         "Closed Stomata",
         "Open Stomata",
-        "Guard cells",
+        "Stomatal Pore",
         "Subsidiary cells",
     ],
     "keypoint_names": ("left", "right"),
@@ -37,7 +37,7 @@ _STOMA_META = {
     "thing_classes": [
         "Closed Stomata",
         "Open Stomata",
-        "Guard cells",
+        "Stomatal Pore",
         "Subsidiary cells",
     ],
     "keypoint_names": ("left", "right"),
