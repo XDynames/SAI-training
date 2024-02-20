@@ -1,8 +1,6 @@
-import os
 import json
-import copy
+from typing import Dict, List, Union
 
-import torch
 import numpy as np
 import shapely
 from shapely import affinity
@@ -11,6 +9,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from rasterio.transform import IDENTITY
 from mask_to_polygons.vectorification import geometries_from_mask
+from detectron2.utils.visualizer import GenericMask
+
+from datasets.create_annotations import NAMES_TO_CATEGORY_ID
+from utils.bbox import is_bbox_a_in_bbox_b
 
 Predicted_Lengths = []
 
@@ -21,6 +23,7 @@ Predicted_Lengths = []
 IOU_THRESHOLD = 0.5
 MINIMUM_LENGTH = 5
 
+
 class AnnotationStore:
     def __init__(self, dir_annotations, retrieval=False):
         self.raw_gt = self.load_raw_gt(dir_annotations)
@@ -29,7 +32,7 @@ class AnnotationStore:
         self.ground_truth = self.populate_gt_with_annotations(self.ground_truth)
         if retrieval:
             self._pore_id_to_filename = self._create_pore_to_file_map(self.ground_truth)
-    
+
     def load_raw_gt(self, gt_filepath):
         with open(gt_filepath) as file:
             raw_gt = json.load(file)
@@ -45,7 +48,7 @@ class AnnotationStore:
                 "annotations": list(),
             }
         return gt_formatted
-    
+
     def populate_gt_with_annotations(self, ground_truth):
         # Assign instance annotations to images
         for annotation in self.raw_gt["annotations"]:
@@ -54,7 +57,7 @@ class AnnotationStore:
                 ground_truth[image_id]["annotations"].append(annotation)
             else:
                 for label in annotation:
-                    image_id = self.filename_id_map[label['image_name'] + '.png']
+                    image_id = self.filename_id_map[label["image_name"] + ".png"]
                     ground_truth[image_id]["annotations"].append(label)
         return ground_truth
 
@@ -86,14 +89,19 @@ class AnnotationStore:
         return [filename, pore_annotation]
 
 
+def np_encoder(object):
+    if isinstance(object, (np.generic, np.ndarray)):
+        return object.item()
+
+
 def record_predictions(predictions, filename, stoma_annotations):
     if stoma_annotations is None:
         print(f"# of predictions: {len(predictions.pred_boxes)}")
         predictions = convert_predictions_to_list_of_dictionaries(predictions)
         with open(".".join([filename[:-4] + "-predictions", "json"]), "w") as file:
-            json.dump({"detections": predictions}, file)
+            json.dump({"detections": predictions}, file, default=np_encoder)
         return predictions
-    
+
     predictions = convert_predictions_to_list_of_dictionaries(predictions)
 
     ground_truth = stoma_annotations.ground_truth
@@ -137,48 +145,118 @@ def convert_predictions_to_list_of_dictionaries(predictions):
     predictions = [
         convert_predictions_to_dictionary(i, predictions)
         for i in range(len(predictions.pred_boxes))
+        if not is_stomatal_pore(i, predictions)
     ]
     return predictions
 
 
+def get_predicted_class(i, predictions) -> int:
+    return predictions.pred_classes[i].item()
+
+
+def get_predicted_mask(i, predictions) -> np.array:
+    mask = predictions.pred_masks[i].cpu().numpy()
+    return GenericMask(mask, *mask.shape)
+
+
+def get_predicted_keypoints(i, predictions) -> List[int]:
+    return predictions.pred_keypoints[i].flatten().tolist()
+
+
+def get_predicted_bounding_box(i, predictions) -> List[int]:
+    return predictions.pred_boxes[i].tensor.tolist()[0]
+
+
+def get_prediction_confidence(i, predictions) -> float:
+    return predictions.scores[i].item()
+
+
 def convert_predictions_to_dictionary(i, predictions):
     # Extract and format predictions
-    pred_mask = predictions.pred_masks[i].cpu().numpy()
-    pred_AB = predictions.pred_keypoints[i].flatten().tolist()
-    pred_class = predictions.pred_classes[i].item()
-    if pred_class == 1:
-        # Processes prediction mask
-        pred_polygon = mask_to_poly(pred_mask)
-        pred_CD = find_CD(pred_polygon, gt=False)
-        pred_width = l2_dist(pred_CD)
-        pred_area = pred_mask.sum().item()
-    else:
-        pred_polygon = []
-        pred_CD = [-1, -1, 1.0 - 1, -1, 1]
-        pred_width = 0
-        pred_area = 0
-    
-    pred_length = l2_dist(pred_AB)
-    if pred_length < MINIMUM_LENGTH and pred_polygon:
-        x_points = [x for x in pred_polygon[0::2]]
-        y_points = [y for y in pred_polygon[1::2]]
-        pred_AB = extract_polygon_AB(x_points, y_points)
-        pred_length = l2_dist(pred_AB)
+    class_label = get_predicted_class(i, predictions)
+    guard_cell_mask = get_predicted_mask(i, predictions)
+    keypoints_AB = get_predicted_keypoints(i, predictions)
+    pore_length = l2_dist(keypoints_AB)
 
+    guard_cell_area = guard_cell_mask.area()
+    if len(guard_cell_mask.polygons) > 1:
+        guard_cell_polygon = {
+            "external": guard_cell_mask.polygons[0].tolist(),
+            "internal": guard_cell_mask.polygons[1].tolist(),
+        }
+    else:
+        guard_cell_polygon = {
+            "external": guard_cell_mask.polygons[0].tolist(),
+            "internal": [],
+        }
+
+    if class_label == NAMES_TO_CATEGORY_ID["Open Stomata"]:
+        pore_dict = get_stomatal_pore(i, predictions)
+        if pore_dict is None:
+            class_label = NAMES_TO_CATEGORY_ID["Closed Stomata"]
+        else:
+            pore_polygon = pore_dict["mask"].polygons[0].tolist()
+            # Processes prediction mask
+            keypoints_CD = find_CD(pore_polygon, keypoints_AB, gt=False)
+            pore_width = l2_dist(keypoints_CD)
+            pore_area = pore_dict["mask"].area()
+            if pore_length < MINIMUM_LENGTH:
+                x_points = [x for x in pore_polygon[0::2]]
+                y_points = [y for y in pore_polygon[1::2]]
+                keypoints_AB = extract_polygon_AB(x_points, y_points)
+                pore_length = l2_dist(keypoints_AB)
+
+    if class_label == NAMES_TO_CATEGORY_ID["Closed Stomata"]:
+        keypoints_CD = [-1, -1, 1.0 - 1, -1, 1]
+        pore_width = 0
+        pore_area = 0
+        pore_polygon = []
 
     prediction_dict = {
-        "bbox": predictions.pred_boxes[i].tensor.tolist()[0],
-        "area": pred_area,
-        "AB_keypoints": pred_AB,
-        "length": pred_length,
-        "CD_keypoints": pred_CD,
-        "width": pred_width,
-        "category_id": pred_class,
-        "segmentation": [pred_polygon],
-        "confidence": predictions.scores[i].item(),
+        "bbox": get_predicted_bounding_box(i, predictions),
+        "pore_area": pore_area,
+        "pore_length": pore_length,
+        "pore_width": pore_width,
+        "pore_polygon": pore_polygon,
+        "AB_keypoints": keypoints_AB,
+        "CD_keypoints": keypoints_CD,
+        "category_id": class_label,
+        "guard_cell_area": guard_cell_area,
+        "guard_cell_polygon": guard_cell_polygon,
+        "confidence": get_prediction_confidence(i, predictions),
     }
-    Predicted_Lengths.append(pred_length)
+    Predicted_Lengths.append(pore_length)
     return prediction_dict
+
+
+def get_stomatal_pore(i, predictions) -> Dict:
+    pore_index = find_stomatal_pore(i, predictions)
+    if pore_index is not None:
+        return format_pore_prediction(pore_index, predictions)
+    return None
+
+
+def find_stomatal_pore(i, predictions) -> Union[int, None]:
+    stomata_bbox = get_predicted_bounding_box(i, predictions)
+    for j in range(len(predictions.pred_boxes)):
+        if is_stomatal_pore(j, predictions):
+            pore_bbox = get_predicted_bounding_box(j, predictions)
+            if is_bbox_a_in_bbox_b(pore_bbox, stomata_bbox):
+                return j
+    return None
+
+
+def is_stomatal_pore(i, predictions) -> bool:
+    class_label = get_predicted_class(i, predictions)
+    return class_label == NAMES_TO_CATEGORY_ID["Stomatal Pore"]
+
+
+def format_pore_prediction(i, predictions) -> Dict:
+    pore_dict = {
+        "bbox": get_predicted_bounding_box(i, predictions),
+        "mask": get_predicted_mask(i, predictions),
+    }
+    return pore_dict
 
 
 def convert_gt_to_dictionary(instance_gt):
@@ -243,8 +321,8 @@ def find_CD(polygon, keypoints=None, gt=True):
         plt.clf()
     counter += 1
     """
-    # If there is no intersection
-    if intersections.is_empty:
+    # Invalid intersection
+    if intersections.is_empty or len(intersections) == 1:
         return [-1, -1, 1, -1, -1, 1]
 
     if intersections[0].coords.xy[1] > intersections[1].coords.xy[1]:
@@ -272,17 +350,19 @@ def mask_to_poly(mask):
     poly = poly["coordinates"][0]
     return flatten_polygon(poly)
 
+
 def find_maximum_area_polygon(polygons):
     maximum = 0
     for i, polygon in enumerate(polygons):
         try:
-            polygon = shapely.geometry.Polygon(polygon['coordinates'][0])
+            polygon = shapely.geometry.Polygon(polygon["coordinates"][0])
         except:
             continue
         if polygon.area > maximum:
             maximum = polygon.area
             index = i
     return polygons[index]
+
 
 def flatten_polygon(polygon):
     flat_polygon = []
@@ -292,7 +372,7 @@ def flatten_polygon(polygon):
 
 
 def calc_area(gt_annotation):
-    polygon = gt_annotation['segmentation'][0]
+    polygon = gt_annotation["segmentation"][0]
     x_points = [x for x in polygon[0::2]]
     y_points = [y for y in polygon[1::2]]
     polygon = [[x, y] for x, y in zip(x_points, y_points)]

@@ -7,13 +7,13 @@ from typing import Dict, List, Union
 
 
 import xmltodict
-from demo.record import AnnotationStore
 from loguru import logger
 from PIL import Image
 from tqdm import tqdm
 
 
-from arguments import get_parser
+from datasets.arguments import get_parser
+from utils.bbox import is_bbox_a_in_bbox_b
 
 BOUNDING_BOX_PADDING = 10
 NAMES_TO_CATEGORY_ID = {
@@ -200,7 +200,7 @@ class AnnotationCoverter:
 
         for guard_cell_annotation in self._annotations_by_type["Guard cells"]:
             guard_cell_bbox = self._bbox_dict_to_xyxy(guard_cell_annotation["bndbox"])
-            if self._is_bbox_a_in_bbox_b(guard_cell_bbox, stomata_bbox):
+            if is_bbox_a_in_bbox_b(guard_cell_bbox, stomata_bbox):
                 guard_cell_annotations.append(guard_cell_annotation)
         return guard_cell_annotations
 
@@ -325,7 +325,7 @@ class AnnotationCoverter:
         stomata_bbox = self._bbox_dict_to_xyxy(annotation["bndbox"])
         for pore_annotation in self._annotations_by_type["Stomatal Pore"]:
             pore_bbox = self._bbox_dict_to_xyxy(pore_annotation["bndbox"])
-            if self._is_bbox_a_in_bbox_b(pore_bbox, stomata_bbox):
+            if is_bbox_a_in_bbox_b(pore_bbox, stomata_bbox):
                 return pore_annotation
         return None
 
@@ -352,12 +352,9 @@ class AnnotationCoverter:
     ) -> Union[List[float], None]:
         for i, bounding_box in enumerate(self._stomata_bboxes_xyxy):
             annotation_bbox = self._bbox_dict_to_xyxy(annotation["bndbox"])
-            if self._is_bbox_a_in_bbox_b(annotation_bbox, bounding_box):
+            if is_bbox_a_in_bbox_b(annotation_bbox, bounding_box):
                 return i
         return None
-
-    def _is_bbox_a_in_bbox_b(self, a: List[float], b: List[float]):
-        return a[0] >= b[0] and a[1] >= b[1] and a[2] <= b[2] and a[3] <= b[3]
 
     def _add_paired_annotations_to_dataset(self, annotations: Dict, key: str):
         for bbox_index, pair in annotations.items():

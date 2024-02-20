@@ -90,6 +90,7 @@ setup(
         "iopath==0.1.6",
         "tabulate==0.8.9",
         "scipy",
+        "loguru",
     ],
     extras_require={"all": ["psutil"]},
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
