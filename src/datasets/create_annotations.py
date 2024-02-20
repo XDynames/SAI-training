@@ -20,7 +20,7 @@ NAMES_TO_CATEGORY_ID = {
     "Closed Stomata": 0,
     "Open Stomata": 1,
     "Stomatal Pore": 2,
-    "Subsidiary Cell": 3,
+    "Subsidiary cells": 3,
 }
 
 
