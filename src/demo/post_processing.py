@@ -5,29 +5,33 @@ from scipy.stats import iqr
 import numpy as np
 
 from record import (
-    is_overlapping,
-    Predicted_Lengths,
-    is_stomatal_pore,
+    calculate_area_of_bbox,
+    calculate_area_of_intersection,
     get_predicted_bounding_box,
+    is_overlapping,
+    is_stomata_complex,
+    is_stomatal_pore,
+    Predicted_Lengths,
 )
 from utils.bbox import is_bbox_a_in_bbox_b
 
 CLOSE_TO_EDGE_DISTANCE = 20
 CLOSE_TO_EDGE_SIZE_THRESHOLD = 0.85
 SIZE_THRESHOLD = 0.3
+ORPHAN_AREA_THRESHOLD = 0.5
 
 
 def filter_invalid_predictions(predictions):
     remove_intersecting_predictions(predictions)
     remove_close_to_edge_detections(predictions)
-    remove_extremley_small_detections(predictions)
-    remove_orphan_pores(predictions)
+    remove_extremely_small_detections(predictions)
+    remove_orphan_detections(predictions)
 
 
 def remove_intersecting_predictions(predictions):
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
-        if not is_stomatal_pore(i, predictions):
+        if is_stomata_complex(i, predictions):
             intersecting = [
                 j
                 for j, bbox_j in enumerate(predictions.pred_boxes)
@@ -57,7 +61,7 @@ def remove_close_to_edge_detections(predictions):
     image_height, image_width = predictions.image_size
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
-        if not is_stomatal_pore(i, predictions):
+        if is_stomata_complex(i, predictions):
             is_near_edge = is_bbox_near_edge(bbox_i, image_height, image_width)
             is_significantly_smaller_than_average = is_bbox_small(bbox_i, average_area)
             if is_near_edge and is_significantly_smaller_than_average:
@@ -73,7 +77,7 @@ def calculate_average_bbox_area(predictions):
     areas = [
         calculate_bbox_area(bbox)
         for i, bbox in enumerate(predictions.pred_boxes)
-        if not is_stomatal_pore(i, predictions)
+        if is_stomata_complex(i, predictions)
     ]
     n_bbox = len(areas)
     if n_bbox == 0:
@@ -106,12 +110,12 @@ def is_bbox_small(bbox, average_area):
     return bbox_area < threshold_area
 
 
-def remove_extremley_small_detections(predictions):
+def remove_extremely_small_detections(predictions):
     average_area = calculate_average_bbox_area(predictions)
     final_indices = []
     for i, bbox_i in enumerate(predictions.pred_boxes):
-        if not is_stomatal_pore(i, predictions):
-            if is_bbox_extremley_small(bbox_i, average_area):
+        if is_stomata_complex(i, predictions):
+            if is_bbox_extremely_small(bbox_i, average_area):
                 continue
             else:
                 final_indices.append(i)
@@ -120,16 +124,16 @@ def remove_extremley_small_detections(predictions):
     select_predictions(predictions, final_indices)
 
 
-def is_bbox_extremley_small(bbox, average_area):
+def is_bbox_extremely_small(bbox, average_area):
     return calculate_bbox_area(bbox) < average_area * SIZE_THRESHOLD
 
 
-def remove_orphan_pores(predictions):
+def remove_orphan_detections(predictions):
     final_indices = []
     for i in range(len(predictions.pred_boxes)):
-        if is_stomatal_pore(i, predictions):
-            pore_bbox = get_predicted_bounding_box(i, predictions)
-            if is_orphan_pore(pore_bbox, predictions):
+        if not is_stomata_complex(i, predictions):
+            bbox = get_predicted_bounding_box(i, predictions)
+            if is_orphan(bbox, predictions):
                 continue
             else:
                 final_indices.append(i)
@@ -138,13 +142,23 @@ def remove_orphan_pores(predictions):
     select_predictions(predictions, final_indices)
 
 
-def is_orphan_pore(pore_bbox, predictions) -> bool:
+def is_orphan(bbox, predictions) -> bool:
     for i in range(len(predictions.pred_boxes)):
-        if not is_stomatal_pore(i, predictions):
+        if is_stomata_complex(i, predictions):
             stomata_bbox = get_predicted_bounding_box(i, predictions)
-            if is_bbox_a_in_bbox_b(pore_bbox, stomata_bbox):
-                return False
+            if is_stomatal_pore(i, predictions):
+                if is_bbox_a_in_bbox_b(bbox, stomata_bbox):
+                    return False
+            else:
+                if is_bbox_a_mostly_in_bbox_b(bbox, stomata_bbox):
+                    return False
     return True
+
+
+def is_bbox_a_mostly_in_bbox_b(bbox_a, bbox_b) -> bool:
+    intersecting_area = calculate_area_of_intersection(bbox_a, bbox_b)
+    bbox_a_area = calculate_area_of_bbox(bbox_a)
+    return intersecting_area / bbox_a_area > ORPHAN_AREA_THRESHOLD
 
 
 def remove_outliers_from_records(output_directory):

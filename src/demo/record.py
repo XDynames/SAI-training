@@ -145,9 +145,18 @@ def convert_predictions_to_list_of_dictionaries(predictions):
     predictions = [
         convert_predictions_to_dictionary(i, predictions)
         for i in range(len(predictions.pred_boxes))
-        if not is_stomatal_pore(i, predictions)
+        if is_stomata_complex(i, predictions)
     ]
     return predictions
+
+
+def is_stomata_complex(i, predictions) -> bool:
+    class_label = get_predicted_class(i, predictions)
+    complex_categories = [
+        NAMES_TO_CATEGORY_ID["Closed Stomata"],
+        NAMES_TO_CATEGORY_ID["Open Stomata"],
+    ]
+    return class_label in complex_categories
 
 
 def get_predicted_class(i, predictions) -> int:
@@ -212,6 +221,12 @@ def convert_predictions_to_dictionary(i, predictions):
         pore_area = 0
         pore_polygon = []
 
+    subsidiary_polygons = []
+    subsidiary_cells = get_subsidiary_cells(i, predictions)
+    for subsidiary_cell in subsidiary_cells:
+        polygon = subsidiary_cell["mask"].polygons[0].tolist()
+        subsidiary_polygons.append(polygon)
+
     prediction_dict = {
         "bbox": get_predicted_bounding_box(i, predictions),
         "pore_area": pore_area,
@@ -223,6 +238,7 @@ def convert_predictions_to_dictionary(i, predictions):
         "category_id": class_label,
         "guard_cell_area": guard_cell_area,
         "guard_cell_polygon": guard_cell_polygon,
+        "subsidiary_cell_polygons": subsidiary_polygons,
         "confidence": get_prediction_confidence(i, predictions),
     }
     Predicted_Lengths.append(pore_length)
@@ -257,6 +273,39 @@ def format_pore_prediction(i, predictions) -> Dict:
         "mask": get_predicted_mask(i, predictions),
     }
     return pore_dict
+
+
+def get_subsidiary_cells(i, predictions) -> List[Dict]:
+    subsidiary_cells = []
+    subsidiary_cell_indices = find_subsidiary_cells(i, predictions)
+    if len(subsidiary_cell_indices) > 0:
+        for index in subsidiary_cell_indices:
+            subsidiary_cells.append(format_subsidiary_cell(index, predictions))
+    return subsidiary_cells
+
+
+def find_subsidiary_cells(i, predictions) -> Union[int, None]:
+    subsidiary_cell_indices = []
+    stomata_bbox = get_predicted_bounding_box(i, predictions)
+    for j in range(len(predictions.pred_boxes)):
+        if is_subsidiary_cell(j, predictions):
+            cell_bbox = get_predicted_bounding_box(j, predictions)
+            if is_bbox_a_in_bbox_b(cell_bbox, stomata_bbox):
+                subsidiary_cell_indices.append(j)
+    return subsidiary_cell_indices
+
+
+def is_subsidiary_cell(i, predictions) -> bool:
+    class_label = get_predicted_class(i, predictions)
+    return class_label == NAMES_TO_CATEGORY_ID["Subsidiary cells"]
+
+
+def format_subsidiary_cell(i, predictions) -> Dict:
+    subsidiary_cell_dict = {
+        "bbox": get_predicted_bounding_box(i, predictions),
+        "mask": get_predicted_mask(i, predictions),
+    }
+    return subsidiary_cell_dict
 
 
 def convert_gt_to_dictionary(instance_gt):
@@ -381,7 +430,7 @@ def calc_area(gt_annotation):
     return gt_area
 
 
-def intersects(bbox_1, bbox_2):
+def intersects(bbox_1, bbox_2) -> bool:
     is_overlap = not (
         bbox_2[0] > bbox_1[2]
         or bbox_2[2] < bbox_1[0]
@@ -391,20 +440,20 @@ def intersects(bbox_1, bbox_2):
     return is_overlap
 
 
-def is_overlapping(bbox1, bbox2):
+def is_overlapping(bbox1, bbox2) -> bool:
     if intersects(bbox1, bbox2):
-        return overlaps(bbox1, bbox2)
+        return is_overlap(bbox1, bbox2, IOU_THRESHOLD)
     return False
 
 
-def overlaps(bbox_1, bbox_2):
+def is_overlap(bbox_1, bbox_2, threshold) -> bool:
     iou = intersection_over_union(bbox_1, bbox_2)
-    if iou > IOU_THRESHOLD:
+    if iou > threshold:
         return True
     return False
 
 
-def gt_overlaps(bbox, gt_bbox):
+def gt_overlaps(bbox, gt_bbox) -> bool:
     # GT boxes [x, y, width, height] -> [x1, y1, x2, y2]
     gt_bbox = [gt_bbox[0], gt_bbox[1], gt_bbox[0] + gt_bbox[2], gt_bbox[1] + gt_bbox[3]]
 
@@ -412,14 +461,21 @@ def gt_overlaps(bbox, gt_bbox):
 
 
 def intersection_over_union(bbox, gt_bbox):
-    x_max, y_max = max(bbox[0], gt_bbox[0]), max(bbox[1], gt_bbox[1])
-    x_min, y_min = min(bbox[2], gt_bbox[2]), min(bbox[3], gt_bbox[3])
-    intersecting_area = max(0, x_min - x_max + 1) * max(0, y_min - y_max + 1)
-
-    pred_area = (bbox[2] - bbox[0] + 1) * (bbox[3] - bbox[1] + 1)
-    gt_area = (gt_bbox[2] - gt_bbox[0] + 1) * (gt_bbox[3] - gt_bbox[1] + 1)
+    intersecting_area = calculate_area_of_intersection(bbox, gt_bbox)
+    pred_area = calculate_area_of_bbox(bbox)
+    gt_area = calculate_area_of_bbox(gt_bbox)
     iou = intersecting_area / float(pred_area + gt_area - intersecting_area)
     return iou
+
+
+def calculate_area_of_intersection(bbox, gt_bbox) -> float:
+    x_max, y_max = max(bbox[0], gt_bbox[0]), max(bbox[1], gt_bbox[1])
+    x_min, y_min = min(bbox[2], gt_bbox[2]), min(bbox[3], gt_bbox[3])
+    return max(0, x_min - x_max + 1) * max(0, y_min - y_max + 1)
+
+
+def calculate_area_of_bbox(bbox) -> float:
+    return (bbox[2] - bbox[0] + 1) * (bbox[3] - bbox[1] + 1)
 
 
 def extract_polygon_AB(x_values, y_values):
