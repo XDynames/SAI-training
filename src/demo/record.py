@@ -12,7 +12,7 @@ from mask_to_polygons.vectorification import geometries_from_mask
 from detectron2.utils.visualizer import GenericMask
 
 from datasets.create_annotations import NAMES_TO_CATEGORY_ID
-from utils.bbox import is_bbox_a_in_bbox_b
+from data.bbox import is_bbox_a_in_bbox_b
 
 Predicted_Lengths = []
 

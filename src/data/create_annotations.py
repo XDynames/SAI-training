@@ -12,16 +12,13 @@ from PIL import Image
 from tqdm import tqdm
 
 
-from datasets.arguments import get_parser
-from utils.bbox import is_bbox_a_in_bbox_b
-
-BOUNDING_BOX_PADDING = 10
-NAMES_TO_CATEGORY_ID = {
-    "Closed Stomata": 0,
-    "Open Stomata": 1,
-    "Stomatal Pore": 2,
-    "Subsidiary cells": 3,
-}
+from arguments import get_parser
+from constants import (
+    BOUNDING_BOX_PADDING,
+    HUMAN_TEST_SAMPLES,
+    NAMES_TO_CATEGORY_ID,
+)
+from utils import is_bbox_a_in_bbox_b
 
 
 class AnnotationCoverter:
@@ -479,8 +476,20 @@ class AnnotationCoverter:
         samples = [
             {"image": image, "annotations": annotation}
             for image, annotation in zip(images, annotations)
+            if not self._is_protected_sample(image)
+        ]
+        protected_samples = [
+            {"image": image, "annotations": annotation}
+            for image, annotation in zip(images, annotations)
+            if self._is_protected_sample(image)
         ]
         self._samples = samples
+        self._protected_samples = protected_samples
+
+    def _is_protected_sample(self, image_path: Path):
+        filename = image_path.name.split(".")[0]
+        abbreviated_name = f"{filename.split('_')[0]} {filename.split(' ')[-1]}"
+        return abbreviated_name in HUMAN_TEST_SAMPLES
 
     def _get_all_images(self) -> List[Path]:
         images = list(self._original_image_path.glob("*.png"))
@@ -506,6 +515,7 @@ class AnnotationCoverter:
 
     def _select_samples(self):
         self._validation_samples = [self._samples[i] for i in self._i_val]
+        self._validation_samples.extend(self._protected_samples)
         self._training_samples = [self._samples[i] for i in self._i_train]
 
     def _log_successful_setup(self):
