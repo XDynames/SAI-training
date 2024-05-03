@@ -459,8 +459,8 @@ class AnnotationCoverter:
         self._output_path_root = Path(config.output_path)
         self._n_train_samples = config.num_train
         self._is_shuffled_splits = config.shuffled_splits
-        self._is_filtering_difficult_samples = True
-        self._is_filtering_truncated_samples = True
+        self._is_filtering_difficult_samples = False
+        self._is_filtering_truncated_samples = False
 
     def _maybe_create_output_folder(self):
         self._output_path_root.mkdir(parents=True, exist_ok=True)
@@ -488,7 +488,10 @@ class AnnotationCoverter:
 
     def _is_protected_sample(self, image_path: Path):
         filename = image_path.name.split(".")[0]
-        abbreviated_name = f"{filename.split('_')[0]} {filename.split(' ')[-1]}"
+        if len(filename.split("_")) > 1:
+            abbreviated_name = f"{filename.split('_')[0]} {filename.split(' ')[-1]}"
+        else:
+            abbreviated_name = filename
         return abbreviated_name in HUMAN_TEST_SAMPLES
 
     def _get_all_images(self) -> List[Path]:
