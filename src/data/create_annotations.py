@@ -18,7 +18,7 @@ from constants import (
     HUMAN_TEST_SAMPLES,
     NAMES_TO_CATEGORY_ID,
 )
-from utils import is_bbox_a_in_bbox_b
+from utils import is_bbox_a_in_bbox_b, write_json
 
 
 class AnnotationCoverter:
@@ -43,6 +43,7 @@ class AnnotationCoverter:
         self._save_coco_annotations("train.json")
         self._reset()
         self._convert_validation_samples()
+        self._maybe_save_json_annotations()
         self._save_coco_annotations("val.json")
 
     def _reset(self):
@@ -69,6 +70,28 @@ class AnnotationCoverter:
             self._image_id += 1
             self._reset_annotations()
 
+    def _maybe_save_json_annotations(self):
+        if self._is_saving_json_annotations:
+            self._save_json_annotations()
+
+    def _save_json_annotations(self):
+        for image_detail in self._image_details:
+            image_name = image_detail["file_name"]
+            image_id = image_detail["id"]
+            image_annotations = self._get_image_annotations(image_id)
+            to_save = {"annotations": image_annotations}
+            filename = f"{image_name.split('.')[0]} gt.json"
+            output_path = self._output_path_root.joinpath(filename)
+            write_json(to_save, output_path)
+
+    def _get_image_annotations(self, image_id: int) -> List:
+        annotations = [
+            annotation
+            for annotation in self._annotations
+            if annotation["image_id"] == image_id
+        ]
+        return annotations
+
     def _save_coco_annotations(self, filename: str):
         to_save = {
             "images": self._image_details,
@@ -79,8 +102,7 @@ class AnnotationCoverter:
             ],
         }
         output_path = self._output_path_root.joinpath(filename)
-        with output_path.open("w") as file:
-            json.dump(to_save, file)
+        write_json(to_save, output_path)
         logger.info(f"Saved annotations to: {output_path}")
 
     def _add_image_details_to_split(self, sample: Dict):
@@ -459,6 +481,7 @@ class AnnotationCoverter:
         self._output_path_root = Path(config.output_path)
         self._n_train_samples = config.num_train
         self._is_shuffled_splits = config.shuffled_splits
+        self._is_saving_json_annotations = config.json
         self._is_filtering_difficult_samples = False
         self._is_filtering_truncated_samples = False
 

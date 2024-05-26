@@ -29,4 +29,7 @@ def get_parser():
     parser.add_argument(
         "--arabidopsis", action="store_true", help="Create arabidopsis dataset"
     )
+    parser.add_argument(
+        "--json", action="store_true", help="Write annotations as separate json files"
+    )
     return parser
