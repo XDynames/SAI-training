@@ -44,7 +44,7 @@ from detectron2.evaluation import (
 from detectron2.modeling import GeneralizedRCNNWithTTA
 from fvcore.common.file_io import PathManager
 
-from stoma.data import DatasetMapper, builtin, barley, arabidopsis
+from stoma.data import DatasetMapper, builtin, barley, arabidopsis, dinolight
 from stoma.modeling import KRCNNConvHead
 
 
@@ -139,6 +139,7 @@ def main(args):
     cfg = setup(args)
     barley.register_stomata_dataset(args.dataset_dir)
     arabidopsis.register_stomata_dataset(args.dataset_dir)
+    dinolight.register_stomata_dataset(args.dataset_dir)
 
     if args.eval_only:
         model = Trainer.build_model(cfg)

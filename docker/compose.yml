@@ -9,8 +9,7 @@ services:
       - ../configs:/configs
       - ../output:/output
       - /mnt/data/stomata:/data
-    # command: /bin/sh -c "python ./tools/train_net.py --num-gpus 2 --resume --dataset-dir /data/arabidopsis_v3 --config-file /configs/mask_rcnn_arabidopsis_2.yaml OUTPUT_DIR /output/arabidopsis_v3"
-    command: /bin/sh -c "python ./tools/train_net.py --num-gpus 2 --resume --dataset-dir /data/barley_v3 --config-file /configs/mask_rcnn_barley_2.yaml OUTPUT_DIR /output/barley_v3"
+    command: /bin/sh -c "python ./tools/train_net.py --num-gpus 2 --resume --dataset-dir /data/dinolight --config-file /configs/mask_rcnn_dinolight.yaml OUTPUT_DIR /output/dinolight"
     shm_size: 2gb
     deploy:
       resources:

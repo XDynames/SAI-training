@@ -1,0 +1,12 @@
+_BASE_: "mask_rcnn_arabidopsis.yaml"
+MODEL:
+  ROI_HEADS:
+    NUM_CLASSES: 2
+SOLVER:
+  IMS_PER_BATCH: 2
+  MAX_ITER: 180000
+  AMP: 
+    ENABLED: True
+DATASETS:
+  TRAIN: ("stoma_dinolight_train",)
+  TEST: ("stoma_dinolight_val",)

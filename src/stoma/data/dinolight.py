@@ -5,23 +5,18 @@ from detectron2.data.datasets.register_coco import register_coco_instances
 # ==== datasets and splits for Stomata detection ====
 
 _SPLITS_STOMA_DETECTION = {
-    "stomata_barley_train": (
+    "stoma_dinolight_train": (
         "stoma/images",
         "stoma/annotations/train.json",
     ),
-    "stomata_barley_val": (
+    "stoma_dinolight_val": (
         "stoma/images",
         "stoma/annotations/val.json",
     ),
 }
 
 _STOMA_DETECTION_META = {
-    "thing_classes": [
-        "Closed Stomata",
-        "Open Stomata",
-        "Stomatal Pore",
-        "Subsidiary cells",
-    ],
+    "thing_classes": ["Closed Stomata", "Open Stomata"],
     "keypoint_names": ("left", "right"),
     "keypoint_flip_map": (("left", "right"),),
     "keypoint_connection_rules": [("left", "right", (102, 204, 255))],
@@ -29,17 +24,12 @@ _STOMA_DETECTION_META = {
 
 
 _SPLITS_STOMA = {
-    "barley_train": ("stoma/images", "stoma/annotations/train.json"),
-    "barley_val": ("stoma/images", "stoma/annotations/val.json"),
+    "dinolight_train": ("stoma/images", "stoma/annotations/train.json"),
+    "dinolight_val": ("stoma/images", "stoma/annotations/val.json"),
 }
 
 _STOMA_META = {
-    "thing_classes": [
-        "Closed Stomata",
-        "Open Stomata",
-        "Stomatal Pore",
-        "Subsidiary cells",
-    ],
+    "thing_classes": ["Closed Stomata", "Open Stomata"],
     "keypoint_names": ("left", "right"),
     "keypoint_flip_map": (("left", "right"),),
     "keypoint_connection_rules": [("left", "right", (102, 204, 255))],
