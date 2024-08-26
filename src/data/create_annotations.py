@@ -13,14 +13,15 @@ from tqdm import tqdm
 
 from arguments import get_parser
 from constants import (
+    ARABIDOPSIS_NAMES_TO_CATEGORY_ID,
+    BARLEY_NAMES_TO_CATEGORY_ID,
     BOUNDING_BOX_PADDING,
     HUMAN_TEST_SAMPLES,
-    NAMES_TO_CATEGORY_ID,
 )
 from utils import is_bbox_a_in_bbox_b, write_json
 
 
-class AnnotationCoverter:
+class AnnotationConverter:
     def __init__(self, config: Namespace):
         self._setup(config)
 
@@ -35,6 +36,14 @@ class AnnotationCoverter:
     @property
     def n_validation_samples(self) -> int:
         return len(self._validation_samples)
+
+    @property
+    def _names_to_category_ids(self) -> Dict:
+        if self._is_arabidopsis:
+            names_to_category_ids = ARABIDOPSIS_NAMES_TO_CATEGORY_ID
+        else:
+            names_to_category_ids = BARLEY_NAMES_TO_CATEGORY_ID
+        return names_to_category_ids
 
     def convert_annotations(self):
         self._reset()
@@ -96,8 +105,8 @@ class AnnotationCoverter:
             "images": self._image_details,
             "annotations": self._annotations,
             "categories": [
-                {"id": NAMES_TO_CATEGORY_ID[name], "name": name}
-                for name in NAMES_TO_CATEGORY_ID.keys()
+                {"id": self._names_to_category_ids[name], "name": name}
+                for name in self._names_to_category_ids.keys()
             ],
         }
         output_path = self._output_path_root.joinpath(filename)
@@ -238,7 +247,7 @@ class AnnotationCoverter:
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
-            "category_id": NAMES_TO_CATEGORY_ID["Closed Stomata"],
+            "category_id": self._names_to_category_ids["Closed Stomata"],
             "segmentation": segmentation,
             "num_keypoints": 2,
             "keypoints": keypoints,
@@ -296,7 +305,7 @@ class AnnotationCoverter:
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
-            "category_id": NAMES_TO_CATEGORY_ID["Open Stomata"],
+            "category_id": self._names_to_category_ids["Open Stomata"],
             "segmentation": segmentation,
             "num_keypoints": 2,
             "keypoints": keypoints,
@@ -393,7 +402,7 @@ class AnnotationCoverter:
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
-            "category_id": NAMES_TO_CATEGORY_ID[key],
+            "category_id": self._names_to_category_ids[key],
             "segmentation": segmentation,
             "num_keypoints": 2,
             "keypoints": [0, 0, 0, 0, 0, 0],
@@ -437,7 +446,7 @@ class AnnotationCoverter:
             "bbox": bounding_box,
             "area": self._get_bbox_area(bounding_box),
             "iscrowd": 0,
-            "category_id": NAMES_TO_CATEGORY_ID[key],
+            "category_id": self._names_to_category_ids[key],
             "segmentation": [self._annotation_to_polygon(annotation)],
             "num_keypoints": 2,
             "keypoints": [0, 0, 0, 0, 0, 0],
@@ -478,6 +487,7 @@ class AnnotationCoverter:
         self._original_annotation_path = Path(config.annotation_path)
         self._original_image_path = Path(config.image_path)
         self._output_path_root = Path(config.output_path)
+        self._is_arabidopsis = config.arabidopsis
         self._n_train_samples = config.num_train
         self._is_shuffled_splits = config.shuffled_splits
         self._is_saving_json_annotations = config.json
@@ -552,5 +562,5 @@ class AnnotationCoverter:
 if __name__ == "__main__":
     args = get_parser().parse_args()
     logger.info("Arguments: " + str(args))
-    converter = AnnotationCoverter(args)
+    converter = AnnotationConverter(args)
     converter.convert_annotations()

@@ -1,10 +1,11 @@
+import copy
+
 BOUNDING_BOX_PADDING = 10
-NAMES_TO_CATEGORY_ID = {
-    "Closed Stomata": 0,
-    "Open Stomata": 1,
-    "Stomatal Pore": 2,
-    "Subsidiary cells": 3,
-}
+DINOLIGHT_NAMES_TO_CATEGORY_ID = {"Closed Stomata": 0, "Open Stomata": 1}
+ARABIDOPSIS_NAMES_TO_CATEGORY_ID = copy.deepcopy(DINOLIGHT_NAMES_TO_CATEGORY_ID)
+ARABIDOPSIS_NAMES_TO_CATEGORY_ID["Stomatal Pore"] = 2
+BARLEY_NAMES_TO_CATEGORY_ID = copy.deepcopy(ARABIDOPSIS_NAMES_TO_CATEGORY_ID)
+BARLEY_NAMES_TO_CATEGORY_ID["Subsidiary cells"] = 3
 BARLEY_HUMAN_TEST_SAMPLES = {
     "5Mar 3",
     "5Mar 6",
