@@ -12,15 +12,12 @@ import matplotlib.pyplot as plt
 from detectron2.config import get_cfg
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
+from detectron2.data import MetadataCatalog
 
 from predictor import VisualizationDemo
 from stoma.modeling import KRCNNConvHead
 from stoma.data.builtin import register_stoma
-from record import (
-    record_predictions,
-    AnnotationStore,
-    draw_width_predictions
-)
+from record import record_predictions, AnnotationStore, draw_width_predictions
 from post_processing import remove_outliers_from_records
 
 # constants
@@ -107,6 +104,8 @@ if __name__ == "__main__":
     cfg = setup_cfg(args)
 
     demo = VisualizationDemo(cfg)
+    # Turn off class names
+    # demo.metadata = MetadataCatalog.get("__unused")
 
     # Stores annotation information
     if not args.annotations is None:
@@ -146,20 +145,22 @@ if __name__ == "__main__":
                     os.makedirs(args.output)
                     assert os.path.isdir(args.output), args.output
                 out_filename = os.path.join(args.output, os.path.basename(path))
-                
+
                 # Hook to write predictions for evaluation
                 predictions = record_predictions(
                     predictions["instances"], out_filename, stoma_annotations
                 )
                 mpl_figure = draw_width_predictions(visualized_output, predictions)
-                mpl_figure.savefig(out_filename, dpi=400, bbox_inches = 'tight', pad_inches = 0)
+                mpl_figure.savefig(
+                    out_filename, dpi=400, bbox_inches="tight", pad_inches=0
+                )
                 plt.close(mpl_figure)
             else:
                 cv2.namedWindow(WINDOW_NAME, cv2.WINDOW_NORMAL)
                 cv2.imshow(WINDOW_NAME, visualized_output.get_image()[:, :, ::-1])
                 if cv2.waitKey(0) == 27:
                     break  # esc to quit
-        
+
         # Experiment wide filtering
         remove_outliers_from_records(args.output)
 

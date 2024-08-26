@@ -52,11 +52,12 @@ class VisualizationDemo(object):
         predictions = self.predictor(image)
         instances = predictions["instances"].to(self.cpu_device)
         filter_invalid_predictions(instances)
-        predictions['instances'] = instances
+        predictions["instances"] = instances
 
         # Convert image from OpenCV BGR format to Matplotlib RGB format.
         image = image[:, :, ::-1]
         visualizer = Visualizer(image, self.metadata, instance_mode=self.instance_mode)
+
         # Monkey Patch to draw thinner lines
         def draw_thin_line(self, x_data, y_data, color, linestyle="-", linewidth=2):
             self._draw_line(x_data, y_data, color, "-", linewidth)
@@ -67,7 +68,6 @@ class VisualizationDemo(object):
         vis_output = visualizer.draw_instance_predictions(predictions=instances)
 
         return predictions, vis_output
-
 
     def _frame_from_video(self, video):
         while video.isOpened():
